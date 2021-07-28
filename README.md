@@ -1,2 +1,3 @@
-# K8s_demo
-K8s demos for learning : )
+# K8s-club
+
+Welcome to K8s, Let's learn, share and explore the K8s world together :)
