@@ -16,5 +16,7 @@
 - 如何理解论文中描述的 `borg` 将面向机器转向到了面向应用？
 
 - 有 `CRD` 为何需要使用 `Extension APIServer`？
+  
+  CRD必会持久化到`etcd`，而extension APIServer可以选择不持久化
 
 - `K8s` 代码组织方式是怎样的？`staging/vendor` 为何如此设计？
