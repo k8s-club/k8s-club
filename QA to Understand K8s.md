@@ -5,6 +5,10 @@
 > RetryOnConflict 表示在进行 K8s 对象增删改 的时候，可能存在冲突(被其他组件改动导致 resourceVersion 变化) 从而需要重试，一般通过获取最新 obj 重试即可成功；
 >
 > WorkQueue 中的对象，表示为了快速响应 ResourceEventHandler 调用，一般采用 queue 先存起来(即完成 response)，再通过 sync logic 异步解耦去 process。若 process 失败可 requeue 重新放回队列(可以设置 backoff 策略)，再次重试。
+>
+> controller 模式高纬度的视角是：获取当前所有相关资源的状态，其中有一个资源作为描述预期的核心对象，控制器通过对比预期状态，调整对下属资源进行 **CUD**；
+>
+> 基于这样的设计，在 reconcile 的流程中出现 Conflict, 证明需要 Reconcile 的对象已经发生了变化，个人(@sxllwx) 认为应该进行 requeue，等待下一次的 reconcile，重新获取这些对象然后进行 Reconcile。
 
 - 如何理解 `Status` 中的 `Phase` 是一种状态机？
 > Phase 是 Pod lifecycle 中一种抽象的 high-level 状态值，通过枚举值(Enumeration)实现，包括 Pending、Running、Failed 等，状态之间切换存在依赖限制，比如可以从 Pending => Running，但不能从 Running => Pending；
@@ -26,6 +30,9 @@
 > 水平触发(level-based) 是一种只关心当前状态、不关心、不依赖历史状态的控制器机制，也是一种 crash-safe 的设计模式；缺点是会牺牲一定的性能，因为需要获取全量数据进行计算，而不是仅计算 delta 增量数据；
 >
 > 边缘触发(edge-based) 是一种依赖历史、当前状态的控制器机制，crash-safe 恢复需要依赖历史数据，优点是性能高，因为只需要在应用启动时进行一次全量数据计算，之后就可以仅计算 delta 增量数据。
+>
+> 在其他的组件稳定的情况下，两者等价；
+> 在其他的组件不太稳定的情况下，两者对于错误的容忍度，水平触发的包容性更强；
 
 - 如何理解 `k8s` 所谓的有状态和无状态(`stateless` 和 `stateful`)？
 > 无状态(stateless) 服务表示应用重启、多副本之间没有依赖关系，容器运行不需要依赖历史数据，也就可以不需要数据的持久化；另外，对外提供的 service dns 也会动态变更(如 pod_xxx.ns.svc.cluster.local)，一般通过 Deployment 实现；
