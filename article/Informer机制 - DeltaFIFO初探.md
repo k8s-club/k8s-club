@@ -36,6 +36,7 @@ type DeltaFIFO struct {
 ![deltas-example.png](https://github.com/NoicFank/picture/raw/main/deltaFIFO/deltas-example.png)
 
 如图中所示，总结部分特点如下：
+
 **queue**
 * 存储key，对于key的生成方式`keyOf`，默认是取obj的namespace/name，若namespace为空，即直接为name。
 * 是“有序”的，用来提供DeltaFIFO中FIFO的特性
@@ -72,7 +73,7 @@ func (f *DeltaFIFO) queueActionLocked(actionType DeltaType, obj interface{})
 
 ![deltas-add-obj4.png](https://github.com/NoicFank/picture/raw/main/deltaFIFO/deltas-add-obj4.png)
 
-** / 因此DeltasFIFO的思想即是通过queue来实现FIFO，之后通过items来合并同一个Obj在排队期内的所有操作。/ **
+**因此DeltasFIFO的思想即是通过queue来实现FIFO，之后通过items来合并同一个Obj在排队期内的所有操作。**
 
 ## POP操作
 1. 取queue中的第一个元素queue[0]，记为id，同时该元素需要出队列。如果队列为空，进入`Wait`，等待生产者进行Broadcast
@@ -82,6 +83,7 @@ func (f *DeltaFIFO) queueActionLocked(actionType DeltaType, obj interface{})
 6. 如果process执行出错，调用`addIfNotPresent`，将id和items[id]，放回queue和items中
 
 **HandleDeltas实现逻辑**
+
 该方法在shared_informer中，其就是循环处理item(Deltas)中的Delta，对于每一个Delta：按照操作类型分类，`Deleted`为一类，剩余操作`Sync, Replaced, Added, Updated`归为另一类：
 1. 对于`Deleted`：首先调用indexer的**Delete**方法，在本地存储中删除该Obj。之后调用distribute方法，对所有的Listener进行**deleteNotification**通知删除Obj消息；
 2. 对于`Sync, Replaced, Added, Updated`：首先查看在indexer中是否能够get到该Obj：
@@ -90,9 +92,9 @@ func (f *DeltaFIFO) queueActionLocked(actionType DeltaType, obj interface{})
 
 ## 一些思考
 * 为什么使用DeltaFIFO，而不是直接使用一个FIFO？
-最重要的就是合并请求。也即是在Queue中的key被不断POP处理的过程中，会有大量同一个Obj的请求到来，这些请求可能散布在整个请求流中，也即是不是连续的。比如下面的例子：在7次请求中，包含4次对Obj 1的请求，请求顺序如下：1->20->1->1->3->5->1,如果直接使用FIFO，那么在处理完第一个1之后，需要处理20，之后又需要处理1的请求，后续同理，这样对Obj 1重复多次做了处理，这不是我们希望的。所以在DeltaFIFO中，我们将这一时间段内对同一个Obj的请求都合并为Deltas，每一次的请求作为其中的一个Delta。这里的一段时间指的是这个Obj对应的key如队列queue开始到出队列的这段时间内。
+> 最重要的就是合并请求。也即是在Queue中的key被不断POP处理的过程中，会有大量同一个Obj的请求到来，这些请求可能散布在整个请求流中，也即是不是连续的。比如下面的例子：在7次请求中，包含4次对Obj 1的请求，请求顺序如下：1->20->1->1->3->5->1,如果直接使用FIFO，那么在处理完第一个1之后，需要处理20，之后又需要处理1的请求，后续同理，这样对Obj 1重复多次做了处理，这不是我们希望的。所以在DeltaFIFO中，我们将这一时间段内对同一个Obj的请求都合并为Deltas，每一次的请求作为其中的一个Delta。这里的一段时间指的是这个Obj对应的key如队列queue开始到出队列的这段时间内。
 * Replaced状态表明watch event出现了错误，需要进行relist，这里relist需要和apiServer打交道真的进行一次list操作吗？
-No，不会和ApiServer打交道。这里的relist操作是将indexer中的所有存储的Obj拉到DeltaFIFO中一趟，同时对于在items中已经有的元素就不会再重复添加了。这部分体现的是reconcile的思想，也即是将现有状态向目标状态推进。需要知道的是，全局只会和apiServer打交道进行一次list，后续的同步通过watch来保证。此外，如果indexer为空，那么这里的relist不执行任何的操作。
+> No，不会和ApiServer打交道。这里的relist操作是将indexer中的所有存储的Obj拉到DeltaFIFO中一趟，同时对于在items中已经有的元素就不会再重复添加了。这部分体现的是reconcile的思想，也即是将现有状态向目标状态推进。需要知道的是，全局只会和apiServer打交道进行一次list，后续的同步通过watch来保证。此外，如果indexer为空，那么这里的relist不执行任何的操作。
 
 ## 一些疑惑
 * dedupDelats为什么只挑Deleted状态的进行去重？为什么只需要倒数两个比较去重呢，为了性能考虑吗？那在items中会不会出现<Deleted、Obj>、<Added、Obj>、<Deleted、Obj>的情况？
