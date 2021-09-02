@@ -130,10 +130,11 @@ func (f *DeltaFIFO) **queueActionLocked**(actionType DeltaType, obj interface{})
     the Replace.
 
 
-## 一些疑惑
-* dedupDelats为什么只挑Deleted状态的进行去重？为什么只需要倒数两个比较去重呢，为了性能考虑吗？那在items中会不会出现<Deleted、Obj>、<Added、Obj>、<Deleted、Obj>的情况？
-
+* dedupDelats为什么只挑Deleted状态的进行去重？为什么只需要最后两个比较去重呢？
+>这个问题需要知道什么情况下需要dedup，才能理解为什么只挑Deleted状态去重，以及为什么只比较最后两个是否重复。在大部分情况下（正常情况），放入items中的delta都是真实有意义的变动和更新，也就是说不需要去重这种操作。但是在一种情况下，会需要dedup。也就是Informer内部crash（IO出错）时,会进行Replace操作（最好去看Replace的实现代码就能理解了），重新从ApiServer侧relist所有obj到DeltaFIFO，我们称最新的Obj集合为list，之后从Indexer(如果Indexer不为nil)中找出list中不存在的key，这表明这个obj该被删除了，此时会加<Deleted,obj>到items中。如果Indexer为nil，就会去items中找出list中不存在的key，从而加<Deleted,obj>到items中。这个步骤，如果Reflector重启了多次，就会有重复的<Deleted,obj>放入items对应Deltas数组的尾部，这样就需要dedup来解决这个问题，可以发现只有Deleted这个状态，同时在尾部，由此可以回答这个问题。另外，可以理解这么一个想法： **Apiserver侧为最权威的数据、DeltaFIFO为本地最新的数据、Indexer为本地最全的数据**。
 
 ## TODO
 * DeltaFIFO中的ListKeys方法，遍历queue中的key返回，而不是使用items中的key。
 待跟进：https://github.com/kubernetes/kubernetes/pull/104725
+
+欢迎各位大佬补充修正！
