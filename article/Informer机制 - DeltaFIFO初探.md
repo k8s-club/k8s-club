@@ -1,5 +1,6 @@
 # DeltaFIFO
-DeltaFIFO队列在k8s的informer机制中非常重要。简单来说，其是一个生产者消费者队列，拥有FIFO的特性，同时其操作的资源对象为Delta。每一个Delta包含一个操作类型和操作对象。其在informer机制中的位置如下图中所示，它作为了远端（Apiserver）和本地（Indexer、Listener）之间的传输桥梁。
+DeltaFIFO队列在k8s的informer机制中非常重要，其在informer机制中的位置如下图中所示，它作为了远端（Apiserver）和本地（Indexer、Listener）之间的传输桥梁。简单来说，它是一个生产者消费者队列，拥有FIFO的特性，操作的资源对象为Delta。每一个Delta包含一个操作类型和操作对象。
+
 本文首先介绍其数据结构，之后介绍PUSH操作（远端向其中放Delta）、再介绍POP操作（本地处理其中的Deltas）。最后列出自己的思考。
 
 ![framework.png](https://github.com/NoicFank/picture/raw/main/deltaFIFO/framework.png)
