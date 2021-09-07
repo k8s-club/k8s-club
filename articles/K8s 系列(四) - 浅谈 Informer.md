@@ -42,7 +42,7 @@ type Reflector struct {
 	// 是否要进行分页 List
 	paginatedResult bool
 	
-	// 最后同步的资源版本号，以此为依据，watch 只会关注大于此值得资源
+	// 最后同步的资源版本号，以此为依据，watch 只会监听大于此值的资源
 	lastSyncResourceVersion string
 	// 最后同步的资源版本号是否可用
 	isLastSyncResourceVersionUnavailable bool
@@ -56,7 +56,7 @@ type Reflector struct {
 }
 ```
 从结构体定义可以看到，通过指定目标资源类型进行 ListAndWatch，并可进行分页相关设置。
-第一次拉取全量资源(List 不区分资源类型) 后通过 syncWith 函数全量替换(Replace) 到 DeltaFIFO queue/items 中，之后通过持续监听 Watch(只监听目标资源类型) 增量事件，并去重更新到 DeltaFIFO queue/items 中，等待被消费。
+第一次拉取全量资源(目标资源类型) 后通过 syncWith 函数全量替换(Replace) 到 DeltaFIFO queue/items 中，之后通过持续监听 Watch(目标资源类型) 增量事件，并去重更新到 DeltaFIFO queue/items 中，等待被消费。
 
 watch 目标类型通过 Go reflect 反射实现如下：
 ```go
@@ -81,7 +81,7 @@ func (r *Reflector) watchHandler(start time.Time, w watch.Interface, resourceVer
 }
 ```
 > - 通过反射确认目标资源类型，所以命名为 Reflector 还是比较贴切的；
-> - List 拉取全量资源不区分类型，Watch 只监听目标资源类型变化；
+> - List/Watch 的目标资源类型在 NewSharedIndexInformer.ListerWatcher 进行了确定，但 Watch 还会在 watchHandler 中再次比较一下目标类型；
 
 
 ## 3. 认识 DeltaFIFO
