@@ -4,6 +4,8 @@
 
 Let's learn, share and explore the K8s world together :)
 
+slack: https://join.slack.com/t/k8s-club/shared_invite/zt-vkwxkxb5-xzriikPHKiWxcXQpcLkeaA
+
 <br>
 
 - [QA to Understand K8s](https://github.com/k8s-club/k8s-club/blob/master/QA%20to%20Understand%20K8s.md)
