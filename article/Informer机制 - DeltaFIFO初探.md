@@ -89,10 +89,10 @@ func (f *DeltaFIFO) **queueActionLocked**(actionType DeltaType, obj interface{})
 该方法在shared_informer中，其就是循环处理item(Deltas)中的Delta，对于每一个Delta：按照操作类型分类，`Deleted`为一类，剩余操作`Sync, Replaced, Added, Updated`归为另一类：
 1. 对于`Deleted`：首先调用indexer的**Delete**方法，在本地存储中删除该Obj。之后调用distribute方法，对所有的Listener进行**deleteNotification**通知删除Obj消息；
 2. 对于`Sync, Replaced, Added, Updated`：首先查看在indexer中是否能够get到该Obj：
-* 如果可以get：调用indexer的**Update**方法，更新本地存储的Obj，之后调用distribute方法，对所有的Listener进行**updateNotification**通知更新Obj消息；（**注意**：这部分的distribute针对Sync和部分Replaced只需要通知`syncingListeners`，而不是所有的Listeners。通过distribute方法最后的bool参数来设定，大部分情况设定为false，说明通知所有的Listeners）
+* 如果可以get：调用indexer的**Update**方法，更新本地存储的Obj，之后调用distribute方法，对所有的Listener进行**updateNotification**通知更新Obj消息；（**注意**：这部分的distribute针对Sync和部分Replaced（针对items中newObj和indexer中的oldObj，两者的`ResourceVersion`一致的Replaced）只需要通知`syncingListeners`，而不是所有的Listeners。通过distribute方法最后的bool参数来设定，大部分情况设定为false，说明通知所有的Listeners）
 * 如果get不到：调用indexer的**Add**方法，在本地存储添加该Obj，之后调用distribute方法，对所有的Listener进行**addNotification**通知添加Obj消息；
 > **SyncingListeners 与 Listeners** \
-> deltaFIFO设计之初就分为了两条线，一个是正常CUD的listener，一个是sync的listener(SyncingListener)。当我们通过AddEventHandler方法添加handler时，Listener和SyncingListener始终一致，因为它们的同步倒计时一致。通过AddEventHandlerWithResyncPeriod方法添加handler，因为个性化倒计时，所以Listener和SyncingListener会不一致。
+> deltaFIFO设计之初就分为了两条线，一个是正常CUD的listeners，一个是sync的listener(SyncingListeners)。当我们通过AddEventHandler方法添加handler时，Listeners和SyncingListeners始终一致，因为它们的同步倒计时一致。通过AddEventHandlerWithResyncPeriod方法添加handler，因为个性化倒计时，所以Listeners和SyncingListeners会不一致。
 
 ## 一些思考
 * 为什么使用DeltaFIFO，而不是直接使用一个FIFO？
