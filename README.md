@@ -20,4 +20,4 @@ Let's learn, share and explore the K8s world together :)
 
 ### Join us
 
-slack: https://join.slack.com/t/k8s-club/shared_invite/zt-vkwxkxb5-xzriikPHKiWxcXQpcLkeaA
+Slack: https://join.slack.com/t/k8s-club/shared_invite/zt-vkwxkxb5-xzriikPHKiWxcXQpcLkeaA
