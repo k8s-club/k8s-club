@@ -11,9 +11,11 @@ Let's learn, share and explore the K8s world together :)
 - [Informer 机制 - 概述](./articles/Informer机制%20-%20概述.md)
 - [Informer 机制 - DeltaFIFO](./articles/Informer机制%20-%20DeltaFIFO.md)
 - [浅谈 Informer](./articles/K8s%20系列(四)%20-%20浅谈%20Informer.md)
-- [K8s 知识图谱](./articles/K8s%20%E7%B3%BB%E5%88%97(%E4%B8%80)%20-%20%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1.md)
-- [K8s PR 怎样才能被 merge？](./articles/K8s%20%E7%B3%BB%E5%88%97(%E4%BA%8C)%20-%20K8s%20PR%20%E6%80%8E%E6%A0%B7%E6%89%8D%E8%83%BD%E8%A2%AB%20merge%EF%BC%9F.md)
-- [K8s 如何配置 etcd https 证书？](./articles/K8s%20%E7%B3%BB%E5%88%97(%E4%B8%89)%20-%20%E5%A6%82%E4%BD%95%E9%85%8D%E7%BD%AE%20etcd%20https%20%E8%AF%81%E4%B9%A6%EF%BC%9F.md)
+- [浅谈 CSI](./articles/K8s%20系列(五)%20-%20浅谈%20CSI.md)
+- [浅谈 API 对象](./articles/K8s%20系列(六)%20-%20浅谈%20API%20对象.md)
+- [K8s 知识图谱](./articles/K8s%20系列(一)%20-%20知识图谱.md)
+- [K8s PR 怎样才能被 merge？](./articles/K8s%20系列(二)%20-%20K8s%20PR%20怎样才能被%20merge？.md)
+- [K8s 如何配置 etcd https 证书？](./articles/K8s%20系列(三)%20-%20如何配置%20etcd%20https%20证书？.md)
 
 
 ### Join us

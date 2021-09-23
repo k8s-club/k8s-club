@@ -1,17 +1,18 @@
 ## 1. 概述
 进入 K8s 的世界，会发现有很多的 Controller，它们都是为了完成某类资源(如 pod 是通过 DeploymentController, ReplicaSetController 进行管理)的调谐，目标是保持用户期望的状态。
 
-K8s 中有几十种类型的资源，如何能让 K8s 内部以及外部用户方便、高效的获取某类资源的变化，就是本文 Informer 要实现的。本文将从 Reflector(反射器)、DeletaFIFO(增量队列)、Indexer(索引器)、Controller(控制器)、SharedInformer(共享资源通知器)、processorListener(事件监听处理器)、workqueue(事件处理工作队列) 等方面进行解析。
+K8s 中有几十种类型的资源，如何能让 K8s 内部以及外部用户方便、高效的获取某类资源的变化，就是本文 Informer 要实现的。本文将从 Reflector(反射器)、DeltaFIFO(增量队列)、Indexer(索引器)、Controller(控制器)、SharedInformer(共享资源通知器)、processorListener(事件监听处理器)、workqueue(事件处理工作队列) 等方面进行解析。
 
 > 本文及后续相关文章都基于 K8s v1.22
 
-![K8s-informer](../images/K8s-informer.png)
+![K8s-informer](https://github.com/k8s-club/k8s-club/raw/main/images/K8s-informer.png)
 
 
 ## 2. 从 Reflector 说起
 Reflector 的主要职责是从 apiserver 拉取并持续监听(ListAndWatch) 相关资源类型的增删改(Add/Update/Delete)事件，存储在由 DeltaFIFO 实现的本地缓存(local Store) 中。
 
 首先看一下 Reflector 结构体定义：
+
 ```go
 // staging/src/k8s.io/client-go/tools/cache/reflector.go
 type Reflector struct {
@@ -56,6 +57,7 @@ type Reflector struct {
 }
 ```
 从结构体定义可以看到，通过指定目标资源类型进行 ListAndWatch，并可进行分页相关设置。
+
 第一次拉取全量资源(目标资源类型) 后通过 syncWith 函数全量替换(Replace) 到 DeltaFIFO queue/items 中，之后通过持续监听 Watch(目标资源类型) 增量事件，并去重更新到 DeltaFIFO queue/items 中，等待被消费。
 
 watch 目标类型通过 Go reflect 反射实现如下：
@@ -85,9 +87,11 @@ func (r *Reflector) watchHandler(start time.Time, w watch.Interface, resourceVer
 
 
 ## 3. 认识 DeltaFIFO
+
 还是先看下 DeltaFIFO 结构体定义：
-// staging/src/k8s.io/client-go/tools/cache/delta_fifo.go
+
 ```go
+// staging/src/k8s.io/client-go/tools/cache/delta_fifo.go
 type DeltaFIFO struct {
 	// 读写锁、条件变量
 	lock sync.RWMutex
@@ -134,7 +138,7 @@ const (
 
 通过上面的 Reflector 分析可以知道，DeltaFIFO 的职责是通过队列加锁处理(queueActionLocked)、去重(dedupDeltas)、存储在由 DeltaFIFO 实现的本地缓存(local Store) 中，包括 queue(仅存 objKeys) 和 items(存 objKeys 和对应的 Deltas 增量变化)，并通过 Pop 不断消费，通过 Process(item) 处理相关逻辑。
 
-![K8s-DeltaFIFO](../images/K8s-DeltaFIFO.png)
+![K8s-DeltaFIFO](https://github.com/k8s-club/k8s-club/raw/main/images/K8s-DeltaFIFO.png)
 
 
 ## 4. 索引 Indexer
@@ -152,11 +156,12 @@ type Indices map[string]Index
 // 索引值 map: 由索引函数计算所得索引值(indexedValue) => [objKey1, objKey2...]
 type Index map[string]sets.String
 ```
+
 索引函数(IndexFunc)：就是计算索引的函数，这样允许扩展多种不同的索引计算函数。默认也是最常用的索引函数是：`MetaNamespaceIndexFunc`。
 索引值(indexedValue)：有些地方叫 indexKey，表示由索引函数(IndexFunc) 计算出来的索引值(如 ns1)。
 对象键(objKey)：对象 obj 的 唯一 key(如 ns1/pod1)，与某个资源对象一一对应。
 
-![K8s-indexer](../images/K8s-indexer.png)
+![K8s-indexer](https://github.com/k8s-club/k8s-club/raw/main/images/K8s-indexer.png)
 
 可以看到，Indexer 由 ThreadSafeStore 接口集成，最终由 threadSafeMap 实现。
 
@@ -392,7 +397,7 @@ func (p *sharedProcessor) distribute(obj interface{}, sync bool) {
 
 从代码可以看到 processorListener 巧妙地使用了两个 channel(addCh, nextCh) 和一个 pendingNotifications(由 slice 实现的滚动 Ring) 进行 buffer 缓冲，默认的 initialBufferSize = 1024。既做到了高效传递数据，又不阻塞上下游处理，值得学习。
 
-![K8s-processorListener](../images/K8s-processorListener.png)
+![K8s-processorListener](https://github.com/k8s-club/k8s-club/raw/main/images/K8s-processorListener.png)
 
 
 ## 9. workqueue 忙起来
@@ -400,7 +405,7 @@ func (p *sharedProcessor) distribute(obj interface{}, sync bool) {
 
 为了快速处理而不阻塞 processorListener 回调函数，一般使用 workqueue 进行异步化解耦合处理，其实现如下：
 
-![K8s-workqueue.png](../images/K8s-workqueue.png)
+![K8s-workqueue](https://github.com/k8s-club/k8s-club/raw/main/images/K8s-workqueue.png)
 
 从图中可以看到，workqueue.RateLimitingInterface 集成了 DelayingInterface，DelayingInterface 集成了 Interface，最终由 rateLimitingType 进行实现，提供了 rateLimit 限速、delay 延时入队(由优先级队列通过小顶堆实现)、queue 队列处理 三大核心能力。
 
@@ -420,11 +425,15 @@ func DefaultControllerRateLimiter() RateLimiter {
 这样，在用户侧可以通过调用 workqueue 相关方法进行灵活的队列处理，比如失败多少次就不再重试，失败了延时入队的时间控制，队列的限速控制(QPS)等，实现非阻塞异步化逻辑处理。
 
 ## 10. 小结
-本文通过分析 K8s 中 Reflector(反射器)、DeletaFIFO(增量队列)、Indexer(索引器)、Controller(控制器)、SharedInformer(共享资源通知器)、processorListener(事件监听处理器)、workqueue(事件处理工作队列) 等组件，对 Informer 实现机制进行了解析，通过源码、图文方式说明了相关流程处理，以期更好的理解 K8s Informer 运行流程。
+本文通过分析 K8s 中 Reflector(反射器)、DeltaFIFO(增量队列)、Indexer(索引器)、Controller(控制器)、SharedInformer(共享资源通知器)、processorListener(事件监听处理器)、workqueue(事件处理工作队列) 等组件，对 Informer 实现机制进行了解析，通过源码、图文方式说明了相关流程处理，以期更好的理解 K8s Informer 运行流程。
 
 可以看到，K8s 为了实现高效、非阻塞的核心流程，大量采用了 goroutine 协程、channel 通道、queue 队列、index 索引、map 去重等方式；并通过良好的接口设计模式，给使用者开放了很多扩展能力；采用了统一的接口与实现的命名方式等，这些都值得深入学习与借鉴。
 
-## 参考资料
+
+*PS: 更多内容请关注 [k8s-club](https://github.com/k8s-club/k8s-club)*
+
+
+### 参考资料
 1. [Kubernetes 官方文档](https://kubernetes.io/)
 2. [Kubernetes 源码](https://github.com/kubernetes/kubernetes)
 3. [Kubernetes Architectural Roadmap](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture/architectural-roadmap.md)
