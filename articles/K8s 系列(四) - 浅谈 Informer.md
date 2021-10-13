@@ -5,7 +5,7 @@ K8s 中有几十种类型的资源，如何能让 K8s 内部以及外部用户�
 
 > 本文及后续相关文章都基于 K8s v1.22
 
-![K8s-informer](https://github.com/k8s-club/k8s-club/raw/main/images/K8s-informer.png)
+![K8s-informer](https://github.com/k8s-club/k8s-club/raw/main/images/Informer/K8s-informer.png)
 
 
 ## 2. 从 Reflector 说起
@@ -138,7 +138,7 @@ const (
 
 通过上面的 Reflector 分析可以知道，DeltaFIFO 的职责是通过队列加锁处理(queueActionLocked)、去重(dedupDeltas)、存储在由 DeltaFIFO 实现的本地缓存(local Store) 中，包括 queue(仅存 objKeys) 和 items(存 objKeys 和对应的 Deltas 增量变化)，并通过 Pop 不断消费，通过 Process(item) 处理相关逻辑。
 
-![K8s-DeltaFIFO](https://github.com/k8s-club/k8s-club/raw/main/images/K8s-DeltaFIFO.png)
+![K8s-DeltaFIFO](https://github.com/k8s-club/k8s-club/raw/main/images/Informer/K8s-DeltaFIFO.png)
 
 
 ## 4. 索引 Indexer
@@ -161,7 +161,7 @@ type Index map[string]sets.String
 索引值(indexedValue)：有些地方叫 indexKey，表示由索引函数(IndexFunc) 计算出来的索引值(如 ns1)。
 对象键(objKey)：对象 obj 的 唯一 key(如 ns1/pod1)，与某个资源对象一一对应。
 
-![K8s-indexer](https://github.com/k8s-club/k8s-club/raw/main/images/K8s-indexer.png)
+![K8s-indexer](https://github.com/k8s-club/k8s-club/raw/main/images/Informer/K8s-indexer.png)
 
 可以看到，Indexer 由 ThreadSafeStore 接口集成，最终由 threadSafeMap 实现。
 
@@ -397,7 +397,7 @@ func (p *sharedProcessor) distribute(obj interface{}, sync bool) {
 
 从代码可以看到 processorListener 巧妙地使用了两个 channel(addCh, nextCh) 和一个 pendingNotifications(由 slice 实现的滚动 Ring) 进行 buffer 缓冲，默认的 initialBufferSize = 1024。既做到了高效传递数据，又不阻塞上下游处理，值得学习。
 
-![K8s-processorListener](https://github.com/k8s-club/k8s-club/raw/main/images/K8s-processorListener.png)
+![K8s-processorListener](https://github.com/k8s-club/k8s-club/raw/main/images/Informer/K8s-processorListener.png)
 
 
 ## 9. workqueue 忙起来
@@ -405,7 +405,7 @@ func (p *sharedProcessor) distribute(obj interface{}, sync bool) {
 
 为了快速处理而不阻塞 processorListener 回调函数，一般使用 workqueue 进行异步化解耦合处理，其实现如下：
 
-![K8s-workqueue](https://github.com/k8s-club/k8s-club/raw/main/images/K8s-workqueue.png)
+![K8s-workqueue](https://github.com/k8s-club/k8s-club/raw/main/images/Informer/K8s-workqueue.png)
 
 从图中可以看到，workqueue.RateLimitingInterface 集成了 DelayingInterface，DelayingInterface 集成了 Interface，最终由 rateLimitingType 进行实现，提供了 rateLimit 限速、delay 延时入队(由优先级队列通过小顶堆实现)、queue 队列处理 三大核心能力。
 
