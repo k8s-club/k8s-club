@@ -3,17 +3,18 @@
 
 K8s 持久化存储经历了从 in-tree Volume 到 CSI Plugin(out-of-tree) 的迁移，一方面是为了将 K8s 核心主干代码与 Volume 相关代码解耦，便于更好的维护；另一方面则是为了方便各大云厂商实现统一的接口，提供个性化的云存储能力，以期达到云存储生态圈的开放共赢。
 
-本文将从持久卷 PV 的 创建(Create)、附着(Attach)、分离(Detach)、挂载(Mount)、卸载(Unmount)、删除(Delete) 等核心生命周期进行机制解析。
+本文将从持久卷 PV 的 创建(Create)、附着(Attach)、分离(Detach)、挂载(Mount)、卸载(Unmount)、删除(Delete) 等核心生命周期，对 CSI 实现机制进行了解析。
 
-### 相关术语
+### 1.1 相关术语
 
 | Term              | Definition                                       |
 |-------------------|--------------------------------------------------|
 | CSI | Container Storage Interface. |
 | CNI | Container Network Interface. |
-| CSI | Container Runtime Interface. |
+| CRI | Container Runtime Interface. |
 | PV | Persistent Volume. |
 | PVC | Persistent Volume Claim. |
+| StorageClass | Defined by provisioner(i.e. Storage Provider), to assemble Volume parameters as a resource object. |
 | Volume            | A unit of storage that will be made available inside of a CO-managed container, via the CSI.                          |
 | Block Volume      | A volume that will appear as a block device inside the container.                                                     |
 | Mounted Volume    | A volume that will be mounted using the specified file system and appear as a directory inside the container.         |
@@ -26,6 +27,18 @@ K8s 持久化存储经历了从 in-tree Volume 到 CSI Plugin(out-of-tree) 的�
 | Workload          | The atomic unit of "work" scheduled by a CO. This MAY be a container or a collection of containers.                   |
 
 > 本文及后续相关文章都基于 K8s v1.22
+
+### 1.2 流程概览
+
+PV 创建核心流程：
+- `apiserver` 创建 Pod，根据 `PodSpec.Volumes` 创建 Volume；
+- `PVController` 监听到 PV informer，添加相关 Annotation(如 pv.kubernetes.io/provisioned-by)，调谐实现 PVC/PV 的绑定(Bound)；
+- 判断 `StorageClass.volumeBindingMode`：`WaitForFirstConsumer` 则等待 Pod 调度到 Node 成功后再进行 PV 创建，`Immediate` 则立即调用 PV 创建逻辑，无需等待 Pod 调度；
+- `external-provisioner` 监听到 PV informer, 调用 RPC-CreateVolume 创建 Volume；
+- `AttachDetachController` 将已经绑定(Bound) 成功的 PVC/PV，经过 InTreeToCSITranslator 转换器，由 CSIPlugin 内部逻辑实现 `VolumeAttachment` 资源类型的创建；
+- `external-attacher` 监听到 VolumeAttachment informer，调用 RPC-ControllerPublishVolume 实现 AttachVolume；
+- `kubelet` reconcile 持续调谐：通过判断 `controllerAttachDetachEnabled || PluginIsAttachable` 及当前 Volume 状态进行 AttachVolume/MountVolume，最终实现将 Volume 挂载到 Pod 指定目录中，供 Container 使用；
+
 
 ![K8s-CSI](../images/CSI/K8s-CSI.png)
 
@@ -232,7 +245,7 @@ func (rc *reconciler) reconcile() {
 
 	// 先进行 DetachVolume，确保因 Pod 重新调度到其他节点的 Volume 提前分离(Detach)
 	for _, attachedVolume := range rc.actualStateOfWorld.GetAttachedVolumes() {
-        // 如果不在期望状态的 Volume，则调用 DetachVolume 删除 VolumeAttachment 资源对象
+		// 如果不在期望状态的 Volume，则调用 DetachVolume 删除 VolumeAttachment 资源对象
 		if !rc.desiredStateOfWorld.VolumeExists(
 			attachedVolume.VolumeName, attachedVolume.NodeName) {
 			...
