@@ -21,4 +21,4 @@ Let's learn, share and explore the K8s world together :)
 
 ### Join us
 
-Slack: https://join.slack.com/t/k8s-club/shared_invite/zt-vkwxkxb5-xzriikPHKiWxcXQpcLkeaA
+Slack: https://join.slack.com/t/k8s-club/shared_invite/zt-x8xa3rpx-Vt4krR_ky6xK3XPAeEWlSg
