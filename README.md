@@ -14,6 +14,7 @@ Let's learn, share and explore the K8s world together :)
 - [浅谈 Informer](./articles/K8s%20系列(四)%20-%20浅谈%20Informer.md)
 - [浅谈 CSI](./articles/K8s%20系列(五)%20-%20浅谈%20CSI.md)
 - [浅谈 CNI](./articles/K8s%20系列(六)%20-%20浅谈%20CNI.md)
+- [浅谈 Watch 实现](./articles/浅谈%20K8s%20Watch%20实现.md)
 - [K8s 知识图谱](./articles/K8s%20系列(一)%20-%20知识图谱.md)
 - [K8s PR 怎样才能被 merge？](./articles/K8s%20系列(二)%20-%20K8s%20PR%20怎样才能被%20merge？.md)
 - [K8s 如何配置 etcd https 证书？](./articles/K8s%20系列(三)%20-%20如何配置%20etcd%20https%20证书？.md)
@@ -27,8 +28,9 @@ Let's learn, share and explore the K8s world together :)
 - [Improve DeltaFIFO function 'ListKeys'](https://github.com/kubernetes/kubernetes/pull/104725)
 - [Fix delete nil pointer panic](https://github.com/kubernetes/kubernetes/pull/103232)
 - [Unify controller worker num param threadiness to workers](https://github.com/kubernetes/kubernetes/pull/104231)
+- [Add GC workqueue Forget to stop the rate limiter](https://github.com/kubernetes/kubernetes/pull/106029)
 - [Fix kubectl unlabel response msg](https://github.com/kubernetes/kubernetes/pull/104372)
-- [Fix pending CSR delete time is 24 hours](https://github.com/kubernetes/website/pull/28878)
+- [Fix klog lock release on panic error](https://github.com/kubernetes/klog/pull/272)
 
 ### Join us
 
