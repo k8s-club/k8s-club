@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cmd-demo
+spec:
+  restartPolicy: Never
+  containers:
+  - name: demo-container
+    image: astraw99/busybox-demo
+    command: ["echo", "cmd"]
+    args: ["pod arg1", "pod arg2", "$(MESSAGE)"] # 引用 env: $(VAR)
+    env:
+    - name: MESSAGE
+      value: "env value"

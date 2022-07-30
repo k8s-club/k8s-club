@@ -21,6 +21,7 @@ Let's learn, share and explore the K8s world together :)
 - [K8s 如何配置 etcd https 证书？](./articles/K8s%20系列(三)%20-%20如何配置%20etcd%20https%20证书？.md)
 - [记一次k8s control-plane 排障经历](./articles/抓虫日记%20-%20kube-apiserver.md)
 - [Kubelet - Probe 探针](./articles/Kubelet%20-%20Probe%20探针.md)
+- [如何区分 K8s cmd args 与 Docker Entrypoint？](./articles/如何区分%20K8s%20cmd%20args%20与%20Docker%20Entrypoint？.md)
 
 ### 相关 PRs
 - [fix goroutine leak in the DeleteCollection](https://github.com/kubernetes/kubernetes/pull/105606)
