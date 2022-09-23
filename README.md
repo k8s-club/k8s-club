@@ -11,6 +11,7 @@ Let's learn, share and explore the K8s world together :)
 - [Informer 机制 - 概述](./articles/Informer机制%20-%20概述.md)
 - [Informer 机制 - DeltaFIFO](./articles/Informer机制%20-%20DeltaFIFO.md)
 - [Informer 机制 - Indexer](./articles/Informer机制%20-%20Indexer.md)
+- [Informer 机制 - Resync](./articles/Informer机制%20-%20Resync.md)
 - [浅谈 Informer](./articles/K8s%20系列(四)%20-%20浅谈%20Informer.md)
 - [浅谈 CSI](./articles/K8s%20系列(五)%20-%20浅谈%20CSI.md)
 - [浅谈 CNI](./articles/K8s%20系列(六)%20-%20浅谈%20CNI.md)
@@ -34,6 +35,9 @@ Let's learn, share and explore the K8s world together :)
 - [Add GC workqueue Forget to stop the rate limiter](https://github.com/kubernetes/kubernetes/pull/106029)
 - [Fix kubectl unlabel response msg](https://github.com/kubernetes/kubernetes/pull/104372)
 - [Fix klog lock release on panic error](https://github.com/kubernetes/klog/pull/272)
+- [Scheduling: fix duplicate checks for number of enabled queue sort plugin](https://github.com/kubernetes/kubernetes/pull/110167)
+- [Add error handling for Write() function](https://github.com/kubernetes/kubernetes/pull/105995)
+- [Bugfix about update occupied in podGroup status](https://github.com/kubernetes-sigs/scheduler-plugins/pull/360)
 
 ### Join us
 
