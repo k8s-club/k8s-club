@@ -21,7 +21,11 @@
 > Conditions 则是一种通过对观察到的对象，进行实时计算所得的状态，提供了一种 `open-world` 开放视角，通过列表(Slice list) 实现，包括了 Status, Reason, Message 等字段，不依赖历史状态。
 
 - 为什么 `Controller` 不直接从 `informer` 中取出 `Object` 进行处理，而是从 `WorkQueue` 中取一个 `String` 的 `Key`？
-> 因为每个 Object 在 K8s 各组件内经过 Reconcile，obj 随时都在进行变化。Informer 中对象是以 key-accumulator 方式存储，即一个 obj 随时时间的变化存在很多版本，通过取 Key 间接取到最新的 obj，保证了取到的 obj 是实时最新的对象。
+> 因为每个 Object 在 K8s 各组件内经过 Reconcile，obj 随时都在进行变化。Informer 中对象是以 key-accumulator 方式存储，即一个 obj 随着时间的变化存在很多版本，通过取 Key 间接取到最新的 obj，保证了取到的 obj 是实时最新的对象。
+>
+> 另外，为什么在 Controller 内使用 WorkQueue，还有以下两点考虑：
+> 1. 避免 OOM。具体来说，是提升 Controller(Listener) 处理（接收）事件的速率，（直接放入WorkQueue，比完成复杂的 reconcile 流程要快很多很多），这样就能避免 informer 框架内的 processorListener 在向当前这个 Listener/Controller 派发事件时，向 pendingNotifications 中堆积过多事件，从而引发 OOM。
+> 2. 减少 reconcile 次数，避免多次无意义的 reconcile。通过 WorkQueue 内部的实现机制，能够保证在处理一个 Object 之前哪怕其被添加了多次（在短时间内大量到来等），也只会被处理一次，极大的减少了 reconcile 的次数。同时每次 reconcile 从 Indexer 中取最新的 Object，而不是直接使用被通知的 Object，能够避免无意义的 reconcile。
 
 - 如何理解 `k8s` 中对象的 `Status` 是一种观察到的情况？
 > K8s 中对资源的调谐采用 水平触发(level-based)模式，在控制器 control-loop 中每次都是根据当前观察到的对象进行状态计算，因此 Status 是一种实时观察到的状态。
