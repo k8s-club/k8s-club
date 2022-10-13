@@ -6,8 +6,8 @@ Let's learn, share and explore the K8s world together :)
 
 <br>
 
-- [QA to Understand K8s](./QA%20to%20Understand%20K8s.md)
-- [Controller 设计概要](./controller/README.md)
+- [QA to Understand K8s](./articles/QA%20to%20Understand%20K8s.md)
+- [Controller 设计概要](./articles/如何编写%20K8s-Controller.md)
 - [Informer 机制 - 概述](./articles/Informer机制%20-%20概述.md)
 - [Informer 机制 - DeltaFIFO](./articles/Informer机制%20-%20DeltaFIFO.md)
 - [Informer 机制 - Indexer](./articles/Informer机制%20-%20Indexer.md)
