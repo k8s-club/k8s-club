@@ -252,7 +252,9 @@ func (m *Instance) InstallLegacyAPI(c *completedConfig, restOptionsGetter generi
 经过上面的步骤，APIServer 服务端已准备好 K8s 各类资源的 RESTStorage(底层封装了 ETCD3)，此时客户端可通过 RESTful HTTP 接口向 APIServer 发出资源请求，包括 GET/POST/PATCH/WATCH/DELETE 等操作。
 
 > 客户端 Watch 包括：
+> 
 > (1). kubectl get xxx -w，获取某类资源、并持续监听资源变化；
+> 
 > (2). client-go 中 Reflector ListAndWatch APIServer 各类资源，[点此查看](https://github.com/k8s-club/k8s-club/blob/main/articles/K8s%20%E7%B3%BB%E5%88%97(%E5%9B%9B)%20-%20%E6%B5%85%E8%B0%88%20Informer.md)；
 
 我们以 kubectl get pod -w 为例，说明客户端是如何实现资源的 Watch 操作。
