@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: local-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  storageClassName: ""
+  accessModes:  # 访问模式 ReadWriteOnce -- 卷可以被一个节点以读写方式挂载 ReadOnlyMany -- 卷可以被多个节点以只读方式挂载 ReadWriteMany -- 卷可以被多个节点以读写方式挂载
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  local:  # 只有在特定节点上才可能有下列目录，所以需要设置nodeAffinity
+    path: /home/pv_try
+  nodeAffinity: # 需要设置节点亲和性
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: pv
+              operator: In # 在列表中
+              values:
+                - local
+        # In: label的值在某个列表中
+        # NotIn：label的值不在某个列表中
+        # Exists：某个label存在
+        # kubectl get node --show-labels=true 查看label
+        # kubectl label nodes vm-0-12-centos pv=local 打上label
