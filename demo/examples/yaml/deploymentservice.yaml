@@ -1,0 +1,50 @@
+apiVersion: v1
+data:
+  h1: this is h1
+  h2: this is h2
+kind: ConfigMap
+metadata:
+  name: html
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ngx1
+spec:
+  selector: # 与service重要的联系
+    matchLabels:
+      app: nginx
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: ngx1
+          image: nginx:1.18-alpine
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: htmldata
+              mountPath: /usr/share/nginx/html/index.html
+              subPath: h1
+          ports:
+            - containerPort: 80
+      volumes:
+        - name: htmldata
+          configMap:
+            defaultMode: 0644
+            name: html
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-svc
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:  #service通过selector和pod建立关联
+    app: nginx

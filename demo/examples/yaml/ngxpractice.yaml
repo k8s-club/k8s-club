@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myngx
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: ngx
+          image: nginx:1.18-alpine
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: cmdata
+              mountPath: /data  # 挂载目录
+          env:
+            # 配置环境变量，环境变量大写为主
+            - name: TEST
+              value: testvalue
+            - name: USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: mycm           #  ConfigMap的名称
+                  key: username # 需要取值的键
+
+                  # kubectl exec -it myngx-54d7bf48bd-pcsn8 -- sh 可进入pod中
+                  # 使用echo $TEST   echo $USERNAME 查看挂载的环境变量
+                  # 进入pods中 查看user.txt文件是否存在
+            - name: USER
+              valueFrom:
+                secretKeyRef: # 从secret 取得
+                  name: mysecret           #  ConfigMap的名称
+                  key: user # 需要取值的键
+
+      volumes:
+        - name: cmdata
+          configMap:
+            defaultMode: 0655
+            name: mycm
+            items: # 如果不指定item文件，默认会把所有key都映射成文件
+              - key: user.info
+                path: user.txt

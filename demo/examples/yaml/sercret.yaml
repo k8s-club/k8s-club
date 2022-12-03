@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysecret
+type: Opaque
+# kubectl describe secrets mysecret
+# 需要先用base64编码，echo jiang | base64 && echo 123 | base64 才能生效
+# 查看secret内容
+# 1. kubectl get secrets mysecret -oyaml
+# 2. echo -n amlhbmcK | base64 -d
+# 查看部分内容
+# 3. kubectl get secrets mysecret -o jsonpath={.data}
+data:
+  user: "amlhbmcK" # "jiang"
+  pass: "MTIzCg==" # "123"
+

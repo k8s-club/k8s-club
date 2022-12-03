@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ngx1
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: ngx1
+          image: nginx:1.18-alpine
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: mydata
+              mountPath: /data
+          ports:
+            - containerPort: 80
+      volumes:
+        - name: mydata
+          persistentVolumeClaim:
+            claimName: ngx-pvc  # 使用pv pvc挂载
+            # 可以进入 pod里容器查看。
