@@ -1,4 +1,4 @@
-package fake_client_test
+package fakeclienttest
 
 import (
 	"context"

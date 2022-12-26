@@ -30,6 +30,58 @@ local store是Informer机制中的本地存储（也会被称为Indexer，但是
 
 当然示例中展示的有限，还有更新索引、删除索引等一些功能。结合源码也比较好理解。
 
+### 补充
+为了加深对store中四个概念的理解，以下`Indexers`、`IndexFunc`、`Indices`与`Index`进行数据事例。
+1. **Indexers** map[string]IndexFunc
+```bigquery
+Indexers: {
+    "索引器名1": 索引函数1,
+    "索引器名2": 索引函数2,
+}
+
+Indexers: {
+    "namespace": MetaNamespaceIndexFunc,
+    "label": MetaLabelIndexFunc,
+    "annotation": MetaAnnotationIndexFunc,
+}
+
+```
+2. **IndexFunc** func(obj interface{}) ([]string, error)
+就是用来求出索引键的方法，如**cache.MetaNamespaceIndexFunc** (k8s内置的索引方法)，也可以自定义实现不同的索引器。
+3. **Indices** map[string]Index 
+```bigquery
+Indices: {
+    "索引器1": {
+        "索引键1": ["对象1", "对象2"], 
+        "索引键2": ["对象3", "对象4", "对象5"], 
+    },
+    "索引器2": {
+        "索引键3": ["对象1", "对象2"], 
+        "索引键4": ["对象3"], 
+    }
+
+}
+
+Indices: {
+    "namespace": {
+        "default": ["default/kube-root-ca.crt", "default/configmap-test1", "default/configmap-test2"], 
+        ...
+    },
+    "labels-test": {
+        "label-test2": ["default/configmap-test2"], 
+        "label-test": ["default/configmap-test1"], 
+    }
+    "annotation-test": {
+        "annotations-test": ["default/configmap-test1"],
+        "annotations-test2": ["default/configmap-test2"],
+    }
+    ...
+}
+```
+4. **Index** map[string]sets.String
+就是某个索引键下的所有对象，方便快速查找。
+   
+p.s.：详细代码事例请参考：demo/examples/indexer/indexinformer_test.go
 ## local store源码解析
 
 `Indexer` \
