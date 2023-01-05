@@ -81,6 +81,30 @@
 > - 允许删除数据：删除后重新建立 cluster
 > - 不允许删数据：可以尝试采用 [snapshot & restore](https://etcd.io/docs/v3.5/op-guide/recovery/) 进行快照与恢复操作
 
+- pod 的节点亲和性为什么会存在 `pod.spec.nodeSelector` 和 `pod.spec.affinity.nodeAffinity` 两处设置的地方？
+> 确实，可以同时在两处都设置 pod 的节点亲和性，但是两者之间存在一个重要的区别：
+> - nodeSelector 内的亲和性条件必须都满足（是 and 的关系）
+> - nodeAffinity 内的亲和性条件只要满足其中一个即可（是 Or 的关系）
+>
+> 这点区别可以从下述代码中直接看出
+> ```
+> // pkg/scheduler/framework/plugins/nodeaffinity/node_affinity.go
+>
+> // Match checks whether the pod is schedulable onto nodes according to
+> // the requirements in both nodeSelector and nodeAffinity.
+> func (s RequiredNodeAffinity) Match(node *v1.Node) (bool, error) {
+>     if s.labelSelector != nil {
+>        if !s.labelSelector.Matches(labels.Set(node.Labels)) {
+>           return false, nil
+>        }
+>     }
+>     if s.nodeSelector != nil {
+>        // Match 内部只要 nodeAffinity 中的一项亲和性满足，就返回 true
+>        return s.nodeSelector.Match(node)
+>     }
+>     return true, nil
+> }
+> ```
 
 ## 如何编写 `k8s-Controller`？ 
 [Controller 设计概要](https://github.com/k8s-club/k8s-club/tree/master/controller/README.md)
