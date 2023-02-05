@@ -27,7 +27,7 @@ func TestLabelUse(t *testing.T) {
 	}
 
 	// Selector from string expression.
-	sel, err = labels.Parse("foo==bar")
+	sel, err = labels.Parse("app==aaa")
 	if err != nil {
 		panic(err.Error())
 	}
