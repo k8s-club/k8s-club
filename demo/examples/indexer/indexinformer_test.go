@@ -1,7 +1,7 @@
 package indexer
 
 import (
-	initclient "K8s_demo/demo/examples/init-client"
+	initclient "K8s_demo/demo/examples/client"
 	"fmt"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
