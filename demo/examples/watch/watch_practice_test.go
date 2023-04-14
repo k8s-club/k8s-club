@@ -1,7 +1,7 @@
 package watch
 
 import (
-	"K8s_demo/demo/examples/init-client"
+	"K8s_demo/demo/examples/client"
 	"context"
 	"fmt"
 	corev1 "k8s.io/api/core/v1"
@@ -12,7 +12,7 @@ import (
 )
 
 func TestWatchResource(t *testing.T) {
-	client := init_client.ClientSet.Client
+	client := client.ClientSet.Client
 
 	configmap1 := createConfigMap(client)
 

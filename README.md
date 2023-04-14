@@ -44,7 +44,7 @@ Contributions are highly appreciated, please feel free to submit your PRs.
 
 ### Examples Code
 - [Controller](./demo/examples/controller)
-- [Client](./demo/examples/dynamic)
+- [Client](./demo/examples/client)
 - [Informer](./demo/examples/informer)
 - [Watch](./demo/examples/watch)
 - [Workqueue](./demo/examples/workqueue)

@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-demo # 在 job 里面执行 kubectl 操作
+spec:
+  template:
+    spec:
+      #nodeName: xxx # 可指定节点
+      hostNetwork: true # 同宿主机网络
+      restartPolicy: OnFailure
+      containers:
+        - name: busybox
+          image: busybox
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            #- "sleep 3600"
+            - "kubectl apply -f /tmp/ns.yaml"
+          volumeMounts:
+            - name: config
+              mountPath: /tmp
+            - name: kubectl
+              mountPath: /usr/bin/kubectl
+            - name: kubeconfig
+              mountPath: /root/.kube/config
+      volumes:
+        - name: config
+          configMap:
+            name: job-cm
+        - name: kubectl
+          hostPath:
+            path: /usr/bin/kubectl
+            type: File
+        - name: kubeconfig
+          hostPath:
+            path: /root/.kube/config
+            type: File
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: job-cm
+data:
+  ns.yaml: |
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: test-ns

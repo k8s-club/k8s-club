@@ -1,7 +1,7 @@
 package workqueue
 
 import (
-	"K8s_demo/demo/examples/init-client"
+	"K8s_demo/demo/examples/client"
 	"context"
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,7 +27,7 @@ var (
 
 func TestWorkQueuePractice(t *testing.T) {
 	// 1. 动态客户端
-	client := init_client.ClientSet.DynamicClient
+	client := client.ClientSet.DynamicClient
 
 	// 2. 建立workqueue
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())

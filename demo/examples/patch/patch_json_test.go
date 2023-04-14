@@ -1,10 +1,11 @@
-package main
+package patch
 
 import (
 	"context"
 	"flag"
 	"fmt"
 	"path/filepath"
+	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -13,7 +14,7 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
-func main() {
+func TestPatch(t *testing.T) {
 	var kubeconfig *string
 	if home := homedir.HomeDir(); home != "" {
 		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
