@@ -1,4 +1,4 @@
-package convert_type
+package convert
 
 import (
 	corev1 "k8s.io/api/core/v1"

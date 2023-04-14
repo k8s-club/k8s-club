@@ -1,7 +1,7 @@
-package client
+package fakeclient
 
 import (
-	. "K8s_demo/demo/examples/init-client"
+	. "K8s_demo/demo/examples/client"
 	"context"
 	"fmt"
 	v1 "k8s.io/api/core/v1"

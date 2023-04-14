@@ -1,7 +1,7 @@
 package informer
 
 import (
-	"K8s_demo/demo/examples/init-client"
+	"K8s_demo/demo/examples/client"
 	"context"
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,7 +68,7 @@ func deleteConfigMap(client dynamic.Interface, cm *unstructured.Unstructured) {
 func TestDynamicInformer(t *testing.T) {
 
 	// dynamic客户端
-	client := init_client.ClientSet.DynamicClient
+	client := client.ClientSet.DynamicClient
 
 	// 先创建一个config
 	first := createConfigMap(client)
