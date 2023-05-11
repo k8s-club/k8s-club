@@ -20,6 +20,7 @@ Contributions are highly appreciated, please feel free to submit your PRs.
 - [Kubelet - Probe 探针](./articles/Kubelet%20-%20Probe%20探针.md)
 - [K8s Scheduler Cache](./articles/K8s%20Scheduler%20Cache.md)
 - [K8s PR 怎样才能被 merge？](./articles/K8s%20系列(二)%20-%20K8s%20PR%20怎样才能被%20merge？.md)
+- [关于Pod的原地升级](./articles/关于Pod的原地升级.md)
 - [K8s 如何配置 etcd https 证书？](./articles/K8s%20系列(三)%20-%20如何配置%20etcd%20https%20证书？.md)
 - [Node 异常后 pod 将发生什么？](./articles/Node%20异常后%20pod%20将发生什么？.md)
 - [记一次 K8s control-plane 排障经历](./articles/抓虫日记%20-%20kube-apiserver.md)
