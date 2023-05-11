@@ -29,7 +29,7 @@ func GetPodsByDeployment(depName, ns string) []v1.Pod {
 		klog.Error("create clientSet error: ", err)
 		return nil
 	}
-	rsIdList := getRsIdsByDeployment(deployment, clientSet)
+	rsIdList := getRsIDsByDeployment(deployment, clientSet)
 	podsList := make([]v1.Pod, 0)
 	for _, rs := range rsIdList {
 		pods := getPodsByReplicaSet(rs, clientSet, ns)
@@ -60,8 +60,8 @@ func getPodsByReplicaSet(rs appv1.ReplicaSet, clientSet kubernetes.Interface, ns
 
 }
 
-// getRsIdsByDeployment 根据传入的dep，获取到相关连的rs列表(滚更后的ReplicaSet就没用了)
-func getRsIdsByDeployment(dep *appv1.Deployment, clientSet kubernetes.Interface) []appv1.ReplicaSet {
+// getRsIDsByDeployment 根据传入的dep，获取到相关连的rs列表(滚更后的ReplicaSet就没用了)
+func getRsIDsByDeployment(dep *appv1.Deployment, clientSet kubernetes.Interface) []appv1.ReplicaSet {
 	// 需要使用match labels过滤
 	rsList, err := clientSet.AppsV1().ReplicaSets(dep.Namespace).
 		List(context.TODO(), metav1.ListOptions{
