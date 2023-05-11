@@ -1,4 +1,4 @@
-## 关于Pod的原地重启或升级
+## 关于Pod的原地升级
 
 ### 概述：
 背景解释：把应用的旧版本提换成新版本，但是不再次执行调度，而在"原来节点上"直接操作的过程。此作法能够使应用在升级过程中避免将整个Pod删除、新建，而是基于原有的 Pod 对象升级其中某一个或多个容器的镜像版本。
@@ -86,7 +86,7 @@ example-deployment-658789c5cd-qkn8d   1/1     Running   1          20m    10.244
 
 附注：使用kubectl命令如果不搭配bash脚本，需要手敲非常多次，降低工作效率，以下准备了使用clientgo调用的方式进行原地升级的简易代码。
 
-[原地升级代码示例](./demo/examples/restart)
+[原地升级代码示例](../demo/examples/restart)
 
 另外，也有一个简易版的原地升级控制器的demo可以参考[代码仓库](https://github.com/googs1025/podReStarter-operator)
 
