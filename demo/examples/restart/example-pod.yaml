@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: example-pod
+  labels:
+    app: example-pod
+    version: v2
+spec:
+  containers:
+    - name: example-pod
+      image: nginx:1.18-alpine
+      ports:
+        - containerPort: 80
