@@ -346,7 +346,7 @@ func (b DefaultBinder) Bind(ctx context.Context, state *framework.CycleState, p 
 
 值得注意的是：bind 阶段的插件可以配置多个，但是只要在顺序执行过程中，其中的任何一个插件返回 success，后续的插件就不会继续执行。如果期望除了自身之外的其他插件也能够运行，返回 skip 状态即可。
 
-Tips: 多个插件的执行顺序：首先执行 customer 定义的插件（顺序和 profile 内定义的一致），之后执行 default 定义的插件。trick：可以在 customer 内部调整 default 的顺序。
+Tips: 多个插件的执行顺序：首先执行 执行 default 定义的插件，之后执行 customer 定义的插件（顺序和 profile 内定义的一致）。trick：可以在 customer 内部调整 default 的顺序（首先禁用 default 的插件，之后在 customer 定义的 profile 内添加相应的 default 插件名）。
 
 ##  6. <a name='q6'></a>nodes 为什么是list？还需要将最新操作的 nodeInfo移到队列头部？
 我们查看 cache 的数据结构内的 node，发现其是一个链表的设计，并且在涉及到 nodeInfo 的变更（比如有新的 pod 调度到该 node，或者有该 node 上的 pod 被删除等），都需要将该 nodeInfo 移动到队列头部。为什么要这么设计呢？
