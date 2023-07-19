@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cj-demo
+spec:
+  schedule: "*/1 * * * *" # 每 1min 执行一次，参考：https://crontab.guru/
+  successfulJobsHistoryLimit: 1 # 保留一个已成功的 job 记录 (default is 3)
+  jobTemplate:
+    spec:
+      backoffLimit: 3 # 允许三次失败 (default is 6)
+      ttlSecondsAfterFinished: 86400 # job 完成后保留时间 (effective in K8s > 1.18)
+      template:
+        spec:
+          #nodeName: xxx # 可指定节点
+          #hostNetwork: true # 同宿主机网络
+          restartPolicy: OnFailure
+          containers:
+            - name: busybox
+              image: busybox:1.28
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - sleep 3600

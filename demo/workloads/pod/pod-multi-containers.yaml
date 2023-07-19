@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod
+spec:
+  initContainers:
+    - name: init-0
+      image: busybox
+      command:
+        - echo
+        - msg from init-0
+  containers:
+    - name: main-0
+      image: busybox
+      command:
+        - /bin/sh
+        - -c
+        - sleep 3600

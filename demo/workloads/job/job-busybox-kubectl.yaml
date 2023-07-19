@@ -10,13 +10,13 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: busybox
-          image: busybox
+          image: busybox:1.28
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
             - -c
-            #- "sleep 3600"
-            - "kubectl apply -f /tmp/ns.yaml"
+            #- sleep 3600
+            - kubectl apply -f /tmp/ns.yaml
           volumeMounts:
             - name: config
               mountPath: /tmp
