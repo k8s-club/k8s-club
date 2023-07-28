@@ -107,5 +107,5 @@
 > ```
 
 ## 如何编写 `k8s-Controller`？ 
-[Controller 设计概要](https://github.com/k8s-club/k8s-club/tree/master/controller/README.md)
+[Controller 设计概要](./如何编写%20K8s-Controller.md)
 
