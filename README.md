@@ -25,6 +25,7 @@ Contributions are highly appreciated, please feel free to submit your PRs.
 - [Node 异常后 pod 将发生什么？](./articles/Node%20异常后%20pod%20将发生什么？.md)
 - [记一次 K8s control-plane 排障经历](./articles/抓虫日记%20-%20kube-apiserver.md)
 - [如何区分 K8s cmd args 与 Docker Entrypoint？](./articles/如何区分%20K8s%20cmd%20args%20与%20Docker%20Entrypoint？.md)
+- [如何在 client-go 中使用泛型？](./articles/如何在%20client-go%20中使用泛型？.md)
 - [从 0 到 1 手动搭建 K8s 集群](./articles/从%200%20到%201%20手动搭建%20K8s%20集群.md)
 - [K8s 如何配置 etcd https 证书？](./articles/K8s%20系列(三)%20-%20如何配置%20etcd%20https%20证书？.md)
 - [K8s PR 怎样才能被 merge？](./articles/K8s%20系列(二)%20-%20K8s%20PR%20怎样才能被%20merge？.md)
