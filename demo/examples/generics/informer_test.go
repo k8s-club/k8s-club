@@ -16,15 +16,15 @@ import (
 )
 
 type ResourceEventHandler[T runtime.Object] struct {
-	AddFunc    func(obj T)
+	AddFunc    func(obj T, isInInitialList bool)
 	UpdateFunc func(oldObj T, newObj T)
 	DeleteFunc func(obj T)
 }
 
-func (e *ResourceEventHandler[T]) OnAdd(obj interface{}) {
+func (e *ResourceEventHandler[T]) OnAdd(obj interface{}, isInInitialList bool) {
 	if o, ok := obj.(*unstructured.Unstructured); ok {
 		rr, _ := convertUnstructuredToResource[T](o)
-		e.AddFunc(rr)
+		e.AddFunc(rr, false)
 	}
 }
 
@@ -65,7 +65,7 @@ func TestDynamicInformer(t *testing.T) {
 	deployDynamicInformer := factory.ForResource(parseGVR("apps/v1/deployments"))
 	// eventHandler 回调
 	deployHandler := &ResourceEventHandler[*appv1.Deployment]{
-		AddFunc: func(deploy *appv1.Deployment) {
+		AddFunc: func(deploy *appv1.Deployment, isInInitialList bool) {
 			fmt.Println("on add deploy:", deploy.Name)
 		},
 		UpdateFunc: func(old *appv1.Deployment, new *appv1.Deployment) {
@@ -81,7 +81,7 @@ func TestDynamicInformer(t *testing.T) {
 	// pod对象
 	podDynamicInformer := factory.ForResource(parseGVR("core/v1/pods"))
 	podHandler := &ResourceEventHandler[*v1.Pod]{
-		AddFunc: func(pod *v1.Pod) {
+		AddFunc: func(pod *v1.Pod, isInInitialList bool) {
 			fmt.Println("on add pod:", pod.Name)
 		},
 		UpdateFunc: func(old *v1.Pod, new *v1.Pod) {
@@ -96,7 +96,7 @@ func TestDynamicInformer(t *testing.T) {
 	// lease对象
 	leaseDynamicInformer := factory.ForResource(parseGVR("coordination.k8s.io/v1/leases"))
 	leaseHandler := &ResourceEventHandler[*v12.Lease]{
-		AddFunc: func(pod *v12.Lease) {
+		AddFunc: func(pod *v12.Lease, isInInitialList bool) {
 			fmt.Println("on add lease:", pod.Name)
 		},
 		UpdateFunc: func(old *v12.Lease, new *v12.Lease) {

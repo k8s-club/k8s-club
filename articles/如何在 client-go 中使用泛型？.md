@@ -138,9 +138,11 @@ func NewGenericClient[T runtime.Object](GVR string) *GenericClient[T] {
       panic("GVR empty error")
    }
    gc := &GenericClient[T]{
-      client: initclient.ClientSet.DynamicClient,
-      gvr:    GVR,
+          client:          initclient.ClientSet.DynamicClient, 
+	  discoveryClient: initclient.ClientSet.DiscoveryClient,
+	  gvr:             GVR,
    }
+   ...
    return gc
 }
 ```
@@ -229,9 +231,12 @@ func (gc *GenericClient[T]) Create(tt T, opts ...Option) (T, error) {
         opt()
     }
     
-    var res *unstructured.Unstructured
-    
-    switch defaultNamespaceScope {
+    var res *unstructured.Unstructured 
+	
+    // 判断是否为 namespace scope 类型 
+    isNamespace := isNamespaceScope(gc.restMapper, parseGVR(gc.gvr))
+	
+    switch isNamespace {
     case true:
         res, err = gc.client.Resource(parseGVR(gc.gvr)).Namespace(defaultNamespace).
         Create(defaultContext, unstructuredObj, defaultCreateOptions)
@@ -258,8 +263,10 @@ func (gc *GenericClient[T]) Get(name string, opts ...Option) (T, error) {
     
     var res *unstructured.Unstructured
     var err error
-    
-    switch defaultNamespaceScope {
+
+    isNamespace := isNamespaceScope(gc.restMapper, parseGVR(gc.gvr))
+	
+    switch isNamespace {
     case true:
         res, err = gc.client.Resource(parseGVR(gc.gvr)).Namespace(defaultNamespace).
             Get(defaultContext, name, defaultGetOptions)
@@ -283,8 +290,10 @@ func (gc *GenericClient[T]) Delete(name string, opts ...Option) error {
     for _, opt := range opts {
         opt()
     }
-    
-    switch defaultNamespaceScope {
+
+    isNamespace := isNamespaceScope(gc.restMapper, parseGVR(gc.gvr))
+	
+    switch isNamespace {
     case true:
         err := gc.client.Resource(parseGVR(gc.gvr)).Namespace(defaultNamespace).
         Delete(defaultContext, name, defaultDeleteOptions)
@@ -366,15 +375,15 @@ func main() {
 当然，Informer 也可以按照同一个思路，使用泛型，直接上代码。
 ```go
 type ResourceEventHandler[T runtime.Object] struct {
-   AddFunc    func(obj T)
+   AddFunc    func(obj T, isInInitialList bool)
    UpdateFunc func(obj T, new T)
    DeleteFunc func(obj T)
 }
 
-func (e *ResourceEventHandler[T]) OnAdd(obj interface{}) {
+func (e *ResourceEventHandler[T]) OnAdd(obj interface{}, isInInitialList bool) {
    if o, ok := obj.(*unstructured.Unstructured); ok {
       rr, _ := convertUnstructuredToResource[T](o)
-      e.AddFunc(rr)
+      e.AddFunc(rr, false)
    }
 }
 
@@ -414,7 +423,7 @@ func main() {
    deployDynamicInformer := factory.ForResource(parseGVR("apps/v1/deployments"))
    // eventHandler 回调
    deployHandler := &ResourceEventHandler[*appv1.Deployment]{
-      AddFunc: func(deploy *appv1.Deployment) {
+      AddFunc: func(deploy *appv1.Deployment, isInInitialList bool) {
          fmt.Println("on add deploy:", deploy.Name)
       },
       UpdateFunc: func(old *appv1.Deployment, new *appv1.Deployment) {
@@ -430,7 +439,7 @@ func main() {
    podDynamicInformer := factory.ForResource(parseGVR("core/v1/pods"))
    // eventHandler 回调
    podHandler := &ResourceEventHandler[*v1.Pod]{
-      AddFunc: func(pod *v1.Pod) {
+      AddFunc: func(pod *v1.Pod, isInInitialList bool) {
          fmt.Println("on add pod:", pod.Name)
       },
       UpdateFunc: func(old *v1.Pod, new *v1.Pod) {
@@ -447,7 +456,7 @@ func main() {
    // eventHandler 回调
 
    leaseHandler := &ResourceEventHandler[*v12.Lease]{
-      AddFunc: func(pod *v12.Lease) {
+      AddFunc: func(pod *v12.Lease, isInInitialList bool) {
          fmt.Println("on add lease:", pod.Name)
       },
       UpdateFunc: func(old *v12.Lease, new *v12.Lease) {
