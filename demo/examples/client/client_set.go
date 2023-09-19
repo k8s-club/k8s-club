@@ -2,6 +2,7 @@ package client
 
 import (
 	"flag"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -72,12 +73,14 @@ func HomeDir() string {
 var ClientSet = &Client{}
 
 type Client struct {
-	Client        kubernetes.Interface // 因为需要单元测试，所以不要用 *kubernetes.Clientset
-	DynamicClient dynamic.Interface
+	Client          kubernetes.Interface // 因为需要单元测试，所以不要用 *kubernetes.Clientset
+	DynamicClient   dynamic.Interface
+	DiscoveryClient discovery.DiscoveryInterface
 }
 
 func init() {
 	config := K8sRestConfig()
 	ClientSet.Client = InitClient(config)
 	ClientSet.DynamicClient = InitDynamicClient(config)
+	ClientSet.DiscoveryClient = InitClient(config).Discovery()
 }

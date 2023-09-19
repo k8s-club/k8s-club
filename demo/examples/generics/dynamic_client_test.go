@@ -7,15 +7,32 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/restmapper"
+	"log"
 	"strings"
 	"testing"
 )
+
+// isNamespaceScope 是否 namespace Scope 资源
+func isNamespaceScope(restMapper meta.RESTMapper, gvr schema.GroupVersionResource) bool {
+	gvk, err := restMapper.KindFor(gvr)
+	if err != nil {
+		panic(err)
+	}
+	mapping, err := restMapper.RESTMapping(gvk.GroupKind(), gvr.Version)
+	if err != nil {
+		panic(err)
+	}
+	return mapping.Scope.Name() == meta.RESTScopeNameNamespace
+}
 
 // convertUnstructuredToResource 将 Unstructured 对象转换为 k8s 对象
 func convertUnstructuredToResource[T runtime.Object](unstructuredObj *unstructured.Unstructured) (T, error) {
@@ -58,8 +75,10 @@ func convertResourceToUnstructured[T runtime.Object](tt T) (*unstructured.Unstru
 }
 
 type GenericClient[T runtime.Object] struct {
-	client dynamic.Interface
-	gvr    string
+	client          dynamic.Interface
+	discoveryClient discovery.DiscoveryInterface
+	restMapper      meta.RESTMapper
+	gvr             string
 }
 
 func NewGenericClient[T runtime.Object](GVR string) *GenericClient[T] {
@@ -67,9 +86,18 @@ func NewGenericClient[T runtime.Object](GVR string) *GenericClient[T] {
 		panic("GVR empty error")
 	}
 	gc := &GenericClient[T]{
-		client: initclient.ClientSet.DynamicClient,
-		gvr:    GVR,
+		client:          initclient.ClientSet.DynamicClient,
+		discoveryClient: initclient.ClientSet.DiscoveryClient,
+		gvr:             GVR,
 	}
+	// 初始化 RESTMapper
+	gr, err := restmapper.GetAPIGroupResources(gc.discoveryClient)
+	if err != nil {
+		log.Fatal(err)
+	}
+	mapper := restmapper.NewDiscoveryRESTMapper(gr)
+	gc.restMapper = mapper
+
 	return gc
 }
 
@@ -113,21 +141,13 @@ func WithGetOptions(opts metav1.GetOptions) Option {
 	}
 }
 
-// WithNamespaceScope 支持 Namespace scope 与 非 Namespace scope 资源对象，默认取 Namespace scope
-func WithNamespaceScope(namespaceScope bool) Option {
-	return func() {
-		defaultNamespaceScope = namespaceScope
-	}
-}
-
 var (
-	defaultNamespace      = "default"
-	defaultNamespaceScope = true
-	defaultContext        = context.Background()
-	defaultCreateOptions  = metav1.CreateOptions{}
-	defaultListOptions    = metav1.ListOptions{}
-	defaultGetOptions     = metav1.GetOptions{}
-	defaultDeleteOptions  = metav1.DeleteOptions{}
+	defaultNamespace     = "default"
+	defaultContext       = context.Background()
+	defaultCreateOptions = metav1.CreateOptions{}
+	defaultListOptions   = metav1.ListOptions{}
+	defaultGetOptions    = metav1.GetOptions{}
+	defaultDeleteOptions = metav1.DeleteOptions{}
 )
 
 // Create
@@ -144,7 +164,10 @@ func (gc *GenericClient[T]) Create(tt T, opts ...Option) (T, error) {
 
 	var res *unstructured.Unstructured
 
-	switch defaultNamespaceScope {
+	// 判断是否为 namespace scope 类型
+	isNamespace := isNamespaceScope(gc.restMapper, parseGVR(gc.gvr))
+
+	switch isNamespace {
 	case true:
 		res, err = gc.client.Resource(parseGVR(gc.gvr)).Namespace(defaultNamespace).
 			Create(defaultContext, unstructuredObj, defaultCreateOptions)
@@ -170,7 +193,9 @@ func (gc *GenericClient[T]) Delete(name string, opts ...Option) error {
 		opt()
 	}
 
-	switch defaultNamespaceScope {
+	isNamespace := isNamespaceScope(gc.restMapper, parseGVR(gc.gvr))
+
+	switch isNamespace {
 	case true:
 		err := gc.client.Resource(parseGVR(gc.gvr)).Namespace(defaultNamespace).
 			Delete(defaultContext, name, defaultDeleteOptions)
@@ -199,7 +224,9 @@ func (gc *GenericClient[T]) Get(name string, opts ...Option) (T, error) {
 	var res *unstructured.Unstructured
 	var err error
 
-	switch defaultNamespaceScope {
+	isNamespace := isNamespaceScope(gc.restMapper, parseGVR(gc.gvr))
+
+	switch isNamespace {
 	case true:
 		res, err = gc.client.Resource(parseGVR(gc.gvr)).Namespace(defaultNamespace).
 			Get(defaultContext, name, defaultGetOptions)
@@ -234,7 +261,9 @@ func (gc *GenericClient[T]) List(opts ...Option) (ListRes[T], error) {
 	var res *unstructured.UnstructuredList
 	var err error
 
-	switch defaultNamespaceScope {
+	isNamespace := isNamespaceScope(gc.restMapper, parseGVR(gc.gvr))
+
+	switch isNamespace {
 	case true:
 		res, err = gc.client.Resource(parseGVR(gc.gvr)).Namespace(defaultNamespace).
 			List(defaultContext, defaultListOptions)
@@ -263,7 +292,9 @@ func (gc *GenericClient[T]) Watch(opts ...Option) watch.Interface {
 	var res watch.Interface
 	var err error
 
-	switch defaultNamespaceScope {
+	isNamespace := isNamespaceScope(gc.restMapper, parseGVR(gc.gvr))
+
+	switch isNamespace {
 	case true:
 		res, err = gc.client.Resource(parseGVR(gc.gvr)).Namespace(defaultNamespace).
 			Watch(defaultContext, defaultListOptions)
@@ -344,31 +375,39 @@ func TestGenericClient(t *testing.T) {
 			},
 		},
 	}
+
+	fmt.Println("---------------create deployment--------------------")
 	// 创建
 	_, err := gc.Create(deployment, WithContext(context.Background()),
 		WithNamespace("default"), WithCreateOptions(metav1.CreateOptions{}))
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("create deployment error: ", err)
+		return
 	}
+
+	fmt.Println("---------------get deployment--------------------")
 	// 获取
 	r, _ := gc.Get("my-deployment")
 	fmt.Println("deploy name: ", r.Name)
 
-	// 删除
-	_ = gc.Delete("my-deployment")
-
+	fmt.Println("---------------list deployment--------------------")
 	// 列表
 	depList, _ := gc.List()
 	for _, v := range depList.Items {
-		fmt.Printf(v.Kind)
+		fmt.Println("list deploy: ", v.Name)
 	}
 
+	fmt.Println("---------------watch deployment--------------------")
 	// watch
 	rr := gc.Watch()
 	go func() {
 		aa := <-rr.ResultChan()
-		fmt.Println(aa.Object)
+		fmt.Println("watch deploy: ", aa.Object)
 	}()
+
+	fmt.Println("---------------delete deployment--------------------")
+	// 删除
+	_ = gc.Delete("my-deployment")
 
 	// 创建 ConfigMap 对象
 	configMap := &corev1.ConfigMap{
@@ -383,16 +422,26 @@ func TestGenericClient(t *testing.T) {
 	}
 
 	gcc := NewGenericClient[*corev1.ConfigMap]("v1/configmaps")
-	_, err = gcc.Create(configMap)
+
+	fmt.Println("---------------create configmap--------------------")
+	cc, err := gcc.Create(configMap)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("create configmap error: ", err)
 		return
 	}
 
+	fmt.Println("---------------list configmap--------------------")
 	kk, _ := gcc.List()
 
 	for _, v := range kk.Items {
 		fmt.Println("configmap name: ", v.Name)
+	}
+
+	fmt.Println("---------------delete configmap--------------------")
+	err = gcc.Delete(cc.Name)
+	if err != nil {
+		fmt.Println("delete configmap error: ", err)
+		return
 	}
 
 	gccr := NewGenericClient[*rbacv1.ClusterRole]("rbac.authorization.k8s.io/v1/clusterroles")
@@ -411,21 +460,24 @@ func TestGenericClient(t *testing.T) {
 		},
 	}
 
-	cr, err := gccr.Create(clusterRole, WithNamespaceScope(false))
+	fmt.Println("---------------create cluster role--------------------")
+	cr, err := gccr.Create(clusterRole)
 	if err != nil {
-		fmt.Println(" err: ", err)
+		fmt.Println("create cluster role err: ", err)
 		return
 	}
 
-	cr, err = gccr.Get(cr.Name, WithNamespaceScope(false))
+	fmt.Println("---------------get cluster role--------------------")
+	cr, err = gccr.Get(cr.Name)
 	if err != nil {
-		fmt.Println(" err: ", err)
+		fmt.Println("get cluster role err: ", err)
 		return
 	}
 
-	err = gccr.Delete(cr.Name, WithNamespaceScope(false))
+	fmt.Println("---------------delete cluster role--------------------")
+	err = gccr.Delete(cr.Name)
 	if err != nil {
-		fmt.Println(" err: ", err)
+		fmt.Println("delete cluster role err: ", err)
 		return
 	}
 
