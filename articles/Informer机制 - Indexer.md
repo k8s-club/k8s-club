@@ -3,11 +3,11 @@ local store是Informer机制中的本地存储（也会被称为Indexer，但是
 
 ## local store存在的意义
 
-最主要的目的就是为了**减少对apiServer的访问压力**。在K8s内部，每一种资源的Informer机制都会使用对应的local store来缓存本地该资源的状态，并只在informer首次启动时全量拉取(list)一次，后续通过watch增量更新local store。从而在worker期望get、list对应的资源时，不必访问远端的apiServer，而是直接访问本地的local store即可。同时在本地local store和DeltaFIFO之间的信息也会定时sync来reconcile。
+最主要的目的就是为了**减少对apiServer的访问压力**。在K8s内部，每一种资源的Informer机制都会使用对应的local store来缓存本地该资源的状态，并只在informer首次启动时全量拉取(list)一次，后续通过watch增量更新local store。从而在worker期望get、list对应的资源时，不必访问远端的apiServer，而是直接访问本地的local store即可。同时支持在本地local store和DeltaFIFO之间的信息定时reSync来reconcile。
 
 ## local store与apiSerer的数据同步
 
-本地的local store中的数据与远端apiserer测的最新数据通过`ListAndWatch`机制来同步，也即是首先通过List所有的资源，之后通过Watch来同步数据。如果出现了IO错误，比如：网络错误等。这时会从apiServer重新reList该资源所有的最新数据，并再次进入watch。需要注意的是，reList的数据，首先都到DeltaFIFO中，再通过HandleDeltas将最新的数据同步到Listeners和local store中。同时，local store和deltafifo之间也会定期进行resync。
+本地的local store中的数据与远端apiserer测的最新数据通过`ListAndWatch`机制来同步，也即是首先通过List所有的资源，之后通过Watch来同步数据。如果出现了IO错误，比如：网络错误等。这时会从apiServer重新reList该资源所有的最新数据，并再次进入watch。需要注意的是，reList的数据，首先都到DeltaFIFO中，再通过HandleDeltas将最新的数据同步到Listeners和local store中。同时，local store和deltafifo之间也支持定期进行reSync。
 
 ## 重点概念
 在local store中最主要的是有4个概念需要理解：
@@ -232,3 +232,6 @@ func (c *threadSafeMap) AddIndexers(newIndexers Indexers) error {
 	return nil
 }
 ```
+
+* 如果 indexFunc 返回的 key 列表为空 `[]string{}`，那么对于这个 obj 还会添加到索引中去吗？
+> 这种情况表示在此 indexName 建立的索引中不关心这个 obj，所以不会给该 indexName 对应的 Index 的索引中中添加这个 obj 的 key(namespace/name)。
