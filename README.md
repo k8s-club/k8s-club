@@ -17,11 +17,12 @@ Contributions are highly appreciated, please feel free to submit your PRs.
 - [浅谈 CSI](./articles/K8s%20系列(五)%20-%20浅谈%20CSI.md)
 - [浅谈 CNI](./articles/K8s%20系列(六)%20-%20浅谈%20CNI.md)
 - [浅谈 CRI](./articles/浅谈%20K8s%20CRI.md)
+- [K8s Pod IP 分配机制](./articles/K8s%20Pod%20IP%20分配机制.md)
+- [K8s Service 网络机制](./articles/K8s%20Service%20网络机制.md)
 - [K8s Kubelet 启动流程](./articles/K8s%20Kubelet%20启动流程.md)
 - [Kubelet - Probe 探针](./articles/Kubelet%20-%20Probe%20探针.md)
 - [K8s Scheduler Cache](./articles/K8s%20Scheduler%20Cache.md)
 - [K8s Scheduler Queue](./articles/K8s%20Scheduler%20Queue.md)
-- [K8s Pod IP 分配机制](./articles/K8s%20Pod%20IP%20分配机制.md)
 - [K8s 原地变配 Inplace Vertical Scaling](./articles/K8s%20原地变配%20Inplace%20Vertical%20Scaling.md)
 - [关于 Pod 的原地升级](./articles/关于Pod的原地升级.md)
 - [Node 异常后 pod 将发生什么？](./articles/Node%20异常后%20pod%20将发生什么？.md)
@@ -34,6 +35,8 @@ Contributions are highly appreciated, please feel free to submit your PRs.
 - [Krew - 高效管理 kubectl 插件](./articles/Krew%20-%20高效管理%20kubectl%20插件.md)
 
 ### K8s PRs
+- [Faster ExtractList. Add ExtractListWithAlloc variant](https://github.com/kubernetes/kubernetes/pull/113362)
+- [Fix issue that Audit Server could not correctly encode metav1.DeleteOption](https://github.com/kubernetes/kubernetes/pull/110110)
 - [Fix goroutine leak in the DeleteCollection](https://github.com/kubernetes/kubernetes/pull/105606)
 - [Explain the reason why metaclient special processing metav1.DeleteOptions encoding](https://github.com/kubernetes/kubernetes/pull/104573)
 - [Lock-free broadcaster](https://github.com/kubernetes/kubernetes/pull/91602)
