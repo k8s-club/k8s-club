@@ -9,7 +9,7 @@ type PodInformer interface {
 	Lister() v1.PodLister
 }
 ```
-Informer是一种SharedIndexInformer类型，也是我们后续说明的重点。Lister是PodLister类型，提供List和Pods方法，能够按照namespace和selector按需列取对应资源。
+Informer是一种SharedIndexInformer类型，也是我们后续说明的重点。Lister 提供 List 和 Get 方法，能够按照 selector 和 namespace/name 按需获取对应的资源
 ```go
 type PodLister interface {
     List(selector labels.Selector) (ret []*v1.Pod, err error)
