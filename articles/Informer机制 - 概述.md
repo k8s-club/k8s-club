@@ -22,7 +22,7 @@ type PodLister interface {
 >引用《Kubernetes 源码剖析》一书中的介绍：在 Kubernetes 系统中，组件之间的通过 HTTP 协议进行通信，在不依赖任何中间件的情况下需要保证消息的实时性、可靠性、顺序性等。那么 Kubernetes 是如何做到的呢？答案就是 Informer 机制。
 
 * informer 机制是怎么实现的呢？
->这就是本文的主要内容，首先通过[大的框架](#大的框架)从整体框架的角度了解 informer 机制的流程，之后在[各组件简介](#各组件简介)了解学习其中不同组件的角色和功能，并通过[关键方法之源码解析](#关键方法之源码解析)从源码的角度解析一些重要的函数，帮助进一步理解思想。同时[Informer 机制中的数据同步流向](#Informer 机制中的数据同步流向)在整个 informer 机制中是非常核心的，需要理解清楚。最后例举[一些思考](#一些思考)。end：一些[TODO](#TODO)等待完善。
+>这就是本文的主要内容，首先通过[大的框架](#大的框架)从整体框架的角度了解 informer 机制的流程，之后在[各组件简介](#各组件简介)了解学习其中不同组件的角色和功能，并通过[关键方法之源码解析](#关键方法之源码解析)从源码的角度解析一些重要的函数，帮助进一步理解思想。同时[Informer 机制中的数据同步流向](#Informer-机制中的数据同步流向)在整个 informer 机制中是非常核心的，需要理解清楚。最后例举[一些思考](#一些思考)。end：一些[TODO](#TODO)等待完善。
 
 * informer 机制对我们开发者具体有什么用呢？
 >最直接的就是：可以非常方便的动态获取各种资源的实时变化，开发者只需要在对应的 informer 上调用`AddEventHandler`，添加相应的逻辑处理`AddFunc`、`DeleteFunc`、`UpdateFunc`，就可以处理资源的`Added`、`Deleted`、`Updated`动态变化。这样，整个开发流程就变得非常简单，开发者只需要注重回调的逻辑处理，而不用关心具体事件的生成和派发。
@@ -30,7 +30,7 @@ type PodLister interface {
 ### 本文的组织结构如下：
 * [大的框架](#大的框架)
 * [各组件简介](#各组件简介)
-* [Informer 机制中的数据同步流向](#Informer 机制中的数据同步流向)
+* [Informer 机制中的数据同步流向](#Informer-机制中的数据同步流向)
 * [关键方法之源码解析](#关键方法之源码解析)
 * [一些思考](#一些思考)
 * [TODO](#TODO)
@@ -44,11 +44,11 @@ kubernetes Informer 机制的整体框架如上图所示，我们从使用者的
 
 可以发现用户需要实现的只是自身业务的逻辑，所有的数据存储、同步、分发都由 kubernetes 内建的 client-go 完成了，
 也就是图中剩余的蓝色的部分，其中包含：
-1. SharedIndexInformer：内部包含 controller 和 Indexer，手握控制器和存储，并实现了[sharedIndexInformer 共享机制](#sharedIndexInformer 共享机制)
-2. [Reflector](#Reflector)：这是远端（API Server）和本地（DeltaFIFO、Indexer、Listener）之间数据同步逻辑的核心，通过[ListAndWatch 方法](#ListAndWatch 方法)来实现
-3. [DeltaFIFO](#DeltaFIFO)：Reflector 中存储待处理 obj(确切说是 Delta)的地方，存储本地**最新的**数据，提供数据 Add、Delete、Update 方法，以及执行 relist 的[Replace 方法](#Replace 方法)
-4. [Indexer(Local Store)](#Indexer(Local%20Store))：本地**最全的**数据存储，提供数据存储和数据索引功能。
-5. [HandleDeltas](#HandleDeltas 方法)：消费 DeltaFIFO 中排队的 Delta，同时更新给 Indexer，并通过[distribute 方法](#distribute 方法)派发给对应的 Listener 集合
+1. SharedIndexInformer：内部包含 controller 和 Indexer，手握控制器和存储，并实现了[sharedIndexInformer 共享机制](#sharedIndexInformer-共享机制)
+2. [Reflector](#Reflector)：这是远端（API Server）和本地（DeltaFIFO、Indexer、Listener）之间数据同步逻辑的核心，通过[ListAndWatch 方法](#ListAndWatch-方法)来实现
+3. [DeltaFIFO](#DeltaFIFO)：Reflector 中存储待处理 obj(确切说是 Delta)的地方，存储本地**最新的**数据，提供数据 Add、Delete、Update 方法，以及执行 relist 的[Replace 方法](#Replace-方法)
+4. [Indexer(Local Store)](#indexerlocal-store)：本地**最全的**数据存储，提供数据存储和数据索引功能。
+5. [HandleDeltas](#HandleDeltas-方法)：消费 DeltaFIFO 中排队的 Delta，同时更新给 Indexer，并通过[distribute 方法](#distribute-方法)派发给对应的 Listener 集合
 6. [workqueue](#workqueue)：回调函数处理得到的 obj-key 需要放入其中，待 worker 来消费，支持延迟、限速、去重、并发、标记、通知、有序。
 
 ### sharedIndexInformer 共享机制
@@ -128,7 +128,7 @@ func (f *podInformer) Lister() v1.PodLister {
 首先了解其包含流程 sharedIndexInformer->controller->reflector，因此一个 informer 就有一个 Reflector。
 Reflector 负责监控对应的资源，其中包含 ListerWatcher、store(DeltaFIFO)、lastSyncResourceVersion、resyncPeriod 等信息，
 当资源发生变化时，会触发相应 obj 的变更事件，并将该 obj 的 delta 放入 DeltaFIFO 中。
-它提供一个非常重要的[ListAndWatch 方法](#ListAndWatch 方法)
+它提供一个非常重要的[ListAndWatch 方法](#ListAndWatch-方法)
 
 ### DeltaFIFO
 DeltaFIFO 队列在 Reflector 内部，它作为了远端（API Server）和本地（Indexer、Listener）之间的传输桥梁。简单来说，它是一个生产者消费者队列，拥有 FIFO 的特性，操作的资源对象为 Delta。每一个 Delta 包含一个操作类型和操作对象。更多内容见[Informer 机制-DeltaFIFO](./Informer 机制%20-%20DeltaFIFO.md)
@@ -162,7 +162,7 @@ Listener 通过回调函数接收到对应的 event 之后，需要将对应的 
 这部分为 Informer 机制中数据同步的核心思路。需要知道有四类数据存储需要同步：API Server、DeltaFIFO、Listener、Indexer。对于这四部分，可以简单理解：**API Server 侧为最权威的数据、DeltaFIFO 为本地最新的数据、Indexer 为本地最全的数据、Listener 为用户侧做逻辑用的数据。**。在这其中，存在两条同步通路，一条为远端与本地之间的通路，另一条为本地内部的通路，接下来，让我们对这两条通路进行详细的理解。
 
 ### 远端通路：远端(API Server) ⇔ 本地(DeltaFIFO、Indexer、Listener)
-远端通路可以理解为两类，第一类为通过`List`行为产生的同步行为，这类 event 的 DeltaType 为`Replaced`，同时只有在 Reflector 初始启动时才会产生。另一类为通过`Watch`行为产生的同步行为，对于 watch 到的`Added、Modified、Deleted`类型的 event，对应的 DeltaType 为`Added、Updated、Deleted`。以上步骤为 Reflector 的`ListAndWatch`方法将 API Server 侧的 obj 同步到本地 DeltaFIFO 中。当对应 event 的 Delta 放入 DeltaFIFO 之后，就通过 Controller 的`HandleDeltas`	方法，将对应的 Delta 更新到 Indexer 和 Listener 上。具体更新步骤见：[HandleDeltas 实现逻辑](#HandleDeltas 方法)
+远端通路可以理解为两类，第一类为通过`List`行为产生的同步行为，这类 event 的 DeltaType 为`Replaced`，同时只有在 Reflector 初始启动时才会产生。另一类为通过`Watch`行为产生的同步行为，对于 watch 到的`Added、Modified、Deleted`类型的 event，对应的 DeltaType 为`Added、Updated、Deleted`。以上步骤为 Reflector 的`ListAndWatch`方法将 API Server 侧的 obj 同步到本地 DeltaFIFO 中。当对应 event 的 Delta 放入 DeltaFIFO 之后，就通过 Controller 的`HandleDeltas`	方法，将对应的 Delta 更新到 Indexer 和 Listener 上。具体更新步骤见：[HandleDeltas 实现逻辑](#HandleDeltas-方法)
 
 ### 本地通路：本地(DeltaFIFO、Indexer、SyncingListener）之间同步
 本地通路是通过 Reflector 的`ListAndWatch`方法中运行一个 goroutine 来执行定期的`Resync`操做。首先通过 ShouldResync 计算出`syncingListener`,之后其中的 store.Resync 从 Indxer 拉一遍所有 objs 到 DeltaFIFO 中(list)，其中的 Delta 为`Sync`状态。如果 DeltaFIFO 的 items 中存在该 obj，就不会添加该 obj 的 sync delta。之后 handleDeltas 就会同步 DeltaFIFO 中的 Sync Delta 给 syncingListeners 和 Indexer。当然这个过程中，别的状态的 delta 会被通知给所有的 listener 和 Indexer。站在 Indexer 的角度，这也是一种更新到最新状态的过程。站在本地的视角，DeltaFIFO、Indexer、Listener 都是从 DelataFIFO 中接收 API Server 发来最新数据。
