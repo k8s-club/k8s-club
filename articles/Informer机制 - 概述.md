@@ -53,7 +53,7 @@ kubernetes Informer机制的整体框架如上图所示，我们从使用者的�
 
 ### sharedIndexInformer共享机制
 
-对于同一个资源，会存在多个Listener去关心它的变化，如果每一个Listener都来实例化一个对应的Informer实例，那么会存在非常多冗余的List、watch操作，导致API Server的压力山大。因此一个良好的设计思路为：`Singleton模式`，一个资源只实例化一个Informer，后续所有的Listener都共享这一个Informer实例即可。这就是K8s中Informer的共享机制。
+对于同一个资源，会存在多个Listener去关心它的变化，如果每一个Listener都来实例化一个对应的Informer实例，那么会存在非常多冗余的List、watch操作，导致 API Server 的压力山大。因此一个良好的设计思路为：`Singleton模式`，一个资源只实例化一个Informer，后续所有的Listener都共享这一个Informer实例即可。这就是K8s中Informer的共享机制。
 
 下面我们通过源码看看K8s内部是如何实现Informer的共享机制的：\
 所有的Informer都通过同一个工厂`SharedInformerFactory`来生成：
@@ -159,13 +159,13 @@ Listener通过回调函数接收到对应的event之后，需要将对应的obj-
 * 通知：ShutDown告知该workqueue不再接收新的元素
 
 ## Informer机制中的数据同步流向
-这部分为Informer机制中数据同步的核心思路。需要知道有四类数据存储需要同步：API Server、DeltaFIFO、Listener、Indexer。对于这四部分，可以简单理解：**API Server侧为最权威的数据、DeltaFIFO为本地最新的数据、Indexer为本地最全的数据、Listener为用户侧做逻辑用的数据。**。在这其中，存在两条同步通路，一条为远端与本地之间的通路，另一条为本地内部的通路，接下来，让我们对这两条通路进行详细的理解。
+这部分为Informer机制中数据同步的核心思路。需要知道有四类数据存储需要同步：API Server、DeltaFIFO、Listener、Indexer。对于这四部分，可以简单理解：**API Server 侧为最权威的数据、DeltaFIFO为本地最新的数据、Indexer为本地最全的数据、Listener为用户侧做逻辑用的数据。**。在这其中，存在两条同步通路，一条为远端与本地之间的通路，另一条为本地内部的通路，接下来，让我们对这两条通路进行详细的理解。
 
 ### 远端通路：远端(API Server) ⇔ 本地(DeltaFIFO、Indexer、Listener)
-远端通路可以理解为两类，第一类为通过`List`行为产生的同步行为，这类event的DeltaType为`Replaced`，同时只有在Reflector初始启动时才会产生。另一类为通过`Watch`行为产生的同步行为，对于watch到的`Added、Modified、Deleted`类型的event，对应的DeltaType为`Added、Updated、Deleted`。以上步骤为Reflector的`ListAndWatch`方法将API Server测的obj同步到本地DeltaFIFO中。当对应event的Delta放入DeltaFIFO之后，就通过Controller的`HandleDeltas`	方法，将对应的Delta更新到Indexer和Listener上。具体更新步骤见：[HandleDeltas实现逻辑](#HandleDeltas方法)
+远端通路可以理解为两类，第一类为通过`List`行为产生的同步行为，这类event的DeltaType为`Replaced`，同时只有在Reflector初始启动时才会产生。另一类为通过`Watch`行为产生的同步行为，对于watch到的`Added、Modified、Deleted`类型的event，对应的DeltaType为`Added、Updated、Deleted`。以上步骤为Reflector的`ListAndWatch`方法将 API Server 侧的obj同步到本地DeltaFIFO中。当对应event的Delta放入DeltaFIFO之后，就通过Controller的`HandleDeltas`	方法，将对应的Delta更新到Indexer和Listener上。具体更新步骤见：[HandleDeltas实现逻辑](#HandleDeltas方法)
 
 ### 本地通路：本地(DeltaFIFO、Indexer、SyncingListener）之间同步
-本地通路是通过Reflector的`ListAndWatch`方法中运行一个goroutine来执行定期的`Resync`操做。首先通过ShouldResync计算出`syncingListener`,之后其中的store.Resync从Indxer拉一遍所有objs到DeltaFIFO中(list)，其中的Delta为`Sync`状态。如果DeltaFIFO的items中存在该obj，就不会添加该obj的sync delta。之后handleDeltas就会同步DeltaFIFO中的Sync Delta给syncingListeners和Indexer。当然这个过程中，别的状态的delta会被通知给所有的listener和Indexer。站在Indexer的角度，这也是一种更新到最新状态的过程。站在本地的视角，DeltaFIFO、Indexer、Listener都是从DelataFIFO中接收API Server发来最新数据。
+本地通路是通过Reflector的`ListAndWatch`方法中运行一个goroutine来执行定期的`Resync`操做。首先通过ShouldResync计算出`syncingListener`,之后其中的store.Resync从Indxer拉一遍所有objs到DeltaFIFO中(list)，其中的Delta为`Sync`状态。如果DeltaFIFO的items中存在该obj，就不会添加该obj的sync delta。之后handleDeltas就会同步DeltaFIFO中的Sync Delta给syncingListeners和Indexer。当然这个过程中，别的状态的delta会被通知给所有的listener和Indexer。站在Indexer的角度，这也是一种更新到最新状态的过程。站在本地的视角，DeltaFIFO、Indexer、Listener都是从DelataFIFO中接收 API Server 发来最新数据。
 
 ## 关键方法之源码解析
 ### ListAndWatch方法
@@ -208,7 +208,7 @@ func (r *Reflector) ListAndWatch(stopCh <-chan struct{}) error {
 					panicCh <- r
 				}
 			}()
-			// 执行list操作，从API Server测获取所有obj集合
+			// 执行list操作，从 API Server 侧获取所有obj集合
 			...
 			// 成功完成list
 			close(listCh)
@@ -235,7 +235,7 @@ func (r *Reflector) ListAndWatch(stopCh <-chan struct{}) error {
 		// 从list中整理所有obj为一个数组
 		items, err := meta.ExtractList(list)
 
-		// 3. 将API Server测的最新Obj集合同步到DeltaFIFO中 最终调用DeltaFIFO的Replace方法
+		// 3. 将 API Server 侧的最新Obj集合同步到DeltaFIFO中 最终调用DeltaFIFO的Replace方法
 		if err := r.syncWith(items, resourceVersion); err != nil {
 			return fmt.Errorf("unable to sync list result: %v", err)
 		}
@@ -252,9 +252,9 @@ func (r *Reflector) ListAndWatch(stopCh <-chan struct{}) error {
 }
 ```
 list操作在ListAndWatch中只会运行一次，简单来说，也可看作三个步骤：
-1. 派发goroutine去API Server拉取最新的Obj集合
+1. 派发goroutine去 API Server 拉取最新的Obj集合
 2. 等待goroutine结束，`listCh`接收到信号，表示list完成。或者`stopCh`、`panicCh`发来信号。其中stopCh表示调用者需要停止，panicCh表示goroutine的list过程出错了
-3. 整理API Server测拉取到的最新obj集合，同时`syncWith`到DeltaFIFO中（最终调用DeltaFIFO的Replace方法）。
+3. 整理 API Server 侧拉取到的最新obj集合，同时`syncWith`到DeltaFIFO中（最终调用DeltaFIFO的Replace方法）。
 
 > 注意：对于relist操作，目前理解：是由于watch阶段遇到错误导致ListAndWatch退出，但是退出的err=nil，此时通过外层的Backoffuntil来负责重启ListAndWatch，
 这样又回执行一遍新的List，开启新的Resyn goroutine，再持续watch。这也就是DeltaFIFO中DeltaType为`Replace`的Delta产生的源头
@@ -403,7 +403,7 @@ func (f *DeltaFIFO) Replace(list []interface{}, resourceVersion string) error {
 * 如果knownObjects为空，那就只好退而求其次，遍历DeltaFIFO的items中全部的key，查找在list中不存在的key，如果存在，这就是需要删除的obj。
 
 >注意：老版本不存在Replaced状态，全使用Sync状态。因此为了兼容老版本，需要设置`emitDeltaTypeReplaced`为true来开启Replaced状态。
-当前版本中，Replaced：从API Server测lis操作同步最新的obj集合。Sync：在本地（DeltaFIFO、Indexer、Listener）之间的同步。
+当前版本中，Replaced：从 API Server 侧list操作同步最新的obj集合。Sync：在本地（DeltaFIFO、Indexer、Listener）之间的同步。
 
 >注意：DeltaFIFO中的`knownObjects`本质上就是Indexer，在sharedIndexInformer的Run方法中可以看到。在controller的NewInformer中也可以看到。
 最主要还是了解sharedIndexInformer。
@@ -539,15 +539,15 @@ func (s *sharedIndexInformer)  AddEventHandlerWithResyncPeriod(handler ResourceE
 
 ## 一些思考
 * 什么时候需要Replace？以及DeltaFIFO中Replaced状态的产生方式？
->首先需要知道的是Replaced状态的产生，是由于Reflector从API Server中list所有的Obj，这些Obj对应的Delta都会被打上Replaced的DeltaType。那本质上来说，只有一种情况需要list，也就是Reflector刚启动的时候，它会通过内部的`ListAndWatch`函数进行一次list，后续就通过watch event来保证API Server和本地之间的同步。但是，我们平时也听过relist，这种操作，也即是当遇到watch event出错(IO错误)的时候，需要重新去向API Server请求一次所有的Obj。这类场景的本质其实就是第一种，因为`ListAndWatch`是运行在`BackoffUntil`内的，当ListAndWatch因为非stopChan而发生退出时，就会由BackoffUntil在一定时间后拉起，这是就相当于Reflector刚启动。由此就可以清楚Replaced状态的产生，同它字面的意思一致，就是用API Server测的Obj集合**替换**本地内容。
+>首先需要知道的是Replaced状态的产生，是由于Reflector从 API Server 中list所有的Obj，这些Obj对应的Delta都会被打上Replaced的DeltaType。那本质上来说，只有一种情况需要list，也就是Reflector刚启动的时候，它会通过内部的`ListAndWatch`函数进行一次list，后续就通过watch event来保证 API Server 和本地之间的同步。但是，我们平时也听过relist，这种操作，也即是当遇到watch event出错(IO错误)的时候，需要重新去向 API Server 请求一次所有的Obj。这类场景的本质其实就是第一种，因为`ListAndWatch`是运行在`BackoffUntil`内的，当ListAndWatch因为非stopChan而发生退出时，就会由BackoffUntil在一定时间后拉起，这是就相当于Reflector刚启动。由此就可以清楚Replaced状态的产生，同它字面的意思一致，就是用 API Server 侧的Obj集合**替换**本地内容。
 
 ### TODO
 * 在整个k8s体系下，是通过哪些手段减少对kube-apiserver的压力？
 > 1. informer机制：
 > * 维护本地store(Indexer)从而使得 `R` 操作直接访问Inxer即可。也即是通过obj-key在indexer中直接取到obj。
->* ListAndWatch机制，减少与API Server的交互，只有在起初通过一次List来全量获取，后续通过watch已增量的方式来更新。
+>* ListAndWatch机制，减少与 API Server 的交互，只有在起初通过一次List来全量获取，后续通过watch已增量的方式来更新。
 >2. sharedInformer机制：
->* singleton模式：同一个资源只有一个informer实例，多个listener来绑定informer，从而实现一种资源的改动，通过一个informer实例，通知给若干个listener。避免多个listener都与API Server打交道。
+>* singleton模式：同一个资源只有一个informer实例，多个listener来绑定informer，从而实现一种资源的改动，通过一个informer实例，通知给若干个listener。避免多个listener都与 API Server 打交道。
 
 * kube-apiserver又是通过哪些手段减少对etcd的压力？
 > watch cache方面，待完善。
