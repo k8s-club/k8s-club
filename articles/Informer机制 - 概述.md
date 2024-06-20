@@ -131,10 +131,10 @@ Reflector 负责监控对应的资源，其中包含 ListerWatcher、store(Delta
 它提供一个非常重要的[ListAndWatch 方法](#ListAndWatch-方法)
 
 ### DeltaFIFO
-DeltaFIFO 队列在 Reflector 内部，它作为了远端（API Server）和本地（Indexer、Listener）之间的传输桥梁。简单来说，它是一个生产者消费者队列，拥有 FIFO 的特性，操作的资源对象为 Delta。每一个 Delta 包含一个操作类型和操作对象。更多内容见[Informer 机制-DeltaFIFO](./Informer 机制%20-%20DeltaFIFO.md)
+DeltaFIFO 队列在 Reflector 内部，它作为了远端（API Server）和本地（Indexer、Listener）之间的传输桥梁。简单来说，它是一个生产者消费者队列，拥有 FIFO 的特性，操作的资源对象为 Delta。每一个 Delta 包含一个操作类型和操作对象。更多内容见[Informer 机制-DeltaFIFO](./Informer机制%20-%20DeltaFIFO.md)
 
 ### Indexer(Local Store)
-Indexer(local store)是 Informer 机制中本地最全的数据存储，其通过 DeltaFIFO 中最新的 Delta 不停的更新自身信息，同时需要在本地(DeltaFIFO、Indexer、Listener)之间执行同步，以上两个更新和同步的步骤都由 Reflector 的 ListAndWatch 来触发。同时在本地 crash，需要进行 replace 时，也需要查看到 Indexer 中当前存储的所有 key。更多内容见[Informer 机制-Indexer 初探](./Informer 机制%20-%20Indexer.md)
+Indexer(local store)是 Informer 机制中本地最全的数据存储，其通过 DeltaFIFO 中最新的 Delta 不停的更新自身信息，同时需要在本地(DeltaFIFO、Indexer、Listener)之间执行同步，以上两个更新和同步的步骤都由 Reflector 的 ListAndWatch 来触发。同时在本地 crash，需要进行 replace 时，也需要查看到 Indexer 中当前存储的所有 key。更多内容见[Informer 机制-Indexer 初探](./Informer机制%20-%20Indexer.md)
 
 >**注意**：Reflector 包含 DeltaFIFO，也即是 Reflector 中的 store 使用的为 DeltaFIFO。在 DeltaFIFO 中有 Indexer，也即是其中的 KnownObjects 属性为 Indexer。因此除了 controller 拥有 Indexer、reflector 之外，DeltaFIFO 也拥有 Indexer。
 
