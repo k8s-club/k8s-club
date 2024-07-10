@@ -24,7 +24,7 @@ Contributions are highly appreciated, please feel free to submit your PRs.
 - [K8s Scheduler Cache](./articles/K8s%20Scheduler%20Cache.md)
 - [K8s Scheduler Queue](./articles/K8s%20Scheduler%20Queue.md)
 - [K8s 原地变配 Inplace Vertical Scaling](./articles/K8s%20原地变配%20Inplace%20Vertical%20Scaling.md)
-- [关于 Pod 的原地升级](./articles/关于Pod的原地升级.md)
+- [关于 Pod 的原地升级](./articles/关于 Pod 的原地升级.md)
 - [Node 异常后 pod 将发生什么？](./articles/Node%20异常后%20pod%20将发生什么？.md)
 - [记一次 K8s control-plane 排障经历](./articles/抓虫日记%20-%20kube-apiserver.md)
 - [如何区分 K8s cmd args 与 Docker Entrypoint？](./articles/如何区分%20K8s%20cmd%20args%20与%20Docker%20Entrypoint？.md)
