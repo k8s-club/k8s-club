@@ -102,6 +102,72 @@ Successfully rebased and updated refs/heads/xxxx
 
 至此，一个 `PR` 经过以上这些步骤，才最终被 `merge` 到主分支，`PR` 状态从 `Open` 变更为 `Merged`。相关联的 `Issues` 将会被机器人自动变更为 `Closed`。 
 
+## 9. 补充 常用标签
+refer to: 
+- [website](https://kubernetes.io/docs/contribute/review/for-approvers/)
+- [opening-a-pull-request](https://github.com/kubernetes/community/blob/master/contributors/guide/contributing.md#opening-a-pull-request)
+- [command-help](https://prow.k8s.io/command-help)
+
+### 类型标签
+类型标签是用来对问题（Issue）或拉取请求（Pull Request）进行分类的，以表示它们所属的类别。这些标签的格式通常是 kind/xxx，其中 xxx 代表特定的类别名称。例如，kind/feature 表示新功能，kind/cleanup 表示清理代码等。通过这些类型标签，可以更方便地对问题和拉取请求进行组织和筛选。
+
+| **标签**      | **含义**   |
+| :--------  | :-----  | 
+| kind/design |  issue or PR 有关设计 |
+| kind/documentation | issue or PR 有关文档 |
+| kind/feature | issue or PR 有关新特性 |
+| kind/cleanup | issue or PR 有关代码清理 |
+| kind/bug | issue or PR 有关 bug |
+| kind/flake | issue or PR 有关 flaky test |
+| kind/failing-test |  issue or PR 持续或经常出现 |
+| kind/api-change | issue or PR 有关 API 变更 |
+| needs-kind |  PR 缺少一个类型标签 |
+
+### 领域标签
+领域标签用于标识 Issue 或 Pull Request 所涉及的特定领域，例如 kubectl、apiserver、test 等。这些领域标签的命名格式通常为 area/xxx。通常情况下，从标签的名称就可以直观地了解其所属的领域。以下是一些常用的标签示例：
+
+| **标签**         | **含义**   |
+|:---------------| :-----  | 
+| area/kubectl   |  kubectl 领域问题 |
+| area/apiserver | apiserver 领域问题 |
+| area/kubelet   | kubelet 领域问题 |
+
+### 优先级标签
+priority/xxx 用来标识 Pull Request 的优先级，机器人会先处理优先级高的 Pull Request，优先安排自动化测试。
+kubernetes 社区定义了以下几个优先级：
+
+| **标签**      | **含义**   |
+| :--------  | :-----  | 
+| priority/awaiting-more-evidence |  低优先级，暂时搁置 |
+| priority/backlog | 一般优先级 |
+| priority/important-longterm | 重要，但需要较长的周期才可以完成 |
+| priority/important-soon | 高优先级，应该尽快处理 |
+| priority/critical-urgent | 最高优先级 |
+| needs-priority | 需要一个优先级标签 |
+
+当 Pull Request 没有 priority/xxx 标签时，机器人会自动打上 needs-priority 标签，意思是需要一个优先级标签。
+
+### 常见命令使用
+
+```yaml
+ /retitle                    重命名标题
+ /close                      关闭 issue
+ /assign                     将 issue assign 给自己
+ /unassign                   取消 assign 给自己
+ /sig scheduling             分类 sig/scheduling
+ /remove-sig scheduling      取消分类
+ /help                       需要帮助，会打上标签 help wanted
+ /good-first-issue           打标签 good first issue
+ /retest                     重测出错的测试用例
+ /kind feature               打上类型标签
+ /remove-kind feature        删除类型标签
+ /priority important-soon    打上优先级标签
+ /lgtm                       打上 lgtm 标签
+ /approve                    打上 approve 标签
+ /hold                       打上 hold 标签
+ /milestone v1.30            打上 milestone 标签
+ /cc                         提醒其他人
+```
 ## 小结
 `K8s` 作为一个开源项目，鼓励全世界的参与者积极贡献力量。本文介绍了一个 `K8s PR` 的完整流程，主要包括：提 `Issue`、`Fork` 代码、提交 `PR`、`CLA` 签约、`Review` 跟进、代码 `Squash` 等步骤，如果一切顺利，`PR` 才可能被 `merge` 到主分支。
 
