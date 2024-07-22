@@ -235,3 +235,22 @@ func (c *threadSafeMap) AddIndexers(newIndexers Indexers) error {
 
 * 如果 indexFunc 返回的 key 列表为空 `[]string{}`，那么对于这个 obj 还会添加到索引中去吗？
 > 这种情况表示在此 indexName 建立的索引中不关心这个 obj，所以不会给该 indexName 对应的 Index 的索引中中添加这个 obj 的 key(namespace/name)。
+
+* client 端 watch 到 Api Server 测对象的变更（add/update/delete）之后，是先变更本地数据，还是本地索引？会出现通过索引到拿到 key，但是最终的 obj 已经被删除的情况吗？
+> 不会出现这种情况。对于 infromer 机制而言，client 端使用的 Indexer 是「带索引能力的存储」，对于索引和最终数据的变更都会通过一个锁包装成原子操作，所以不会出现通过 Get 查询到索引和数据不一致的情况。
+```go
+func (c *threadSafeMap) Update(key string, obj interface{}) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	oldObject := c.items[key]
+	c.items[key] = obj
+	c.index.updateIndices(oldObject, obj, key)
+}
+
+func (c *threadSafeMap) Get(key string) (item interface{}, exists bool) {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+	item, exists = c.items[key]
+	return item, exists
+}
+```
