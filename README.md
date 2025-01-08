@@ -1,10 +1,13 @@
 # K8s-club
+
 ## Welcome to K8s 👋
+
 Let's learn, share and explore the K8s world together :)
 <br>
 Contributions are highly appreciated, please feel free to submit your PRs.
 
 ### Articles
+
 - [QA to Understand K8s](./articles/QA%20to%20Understand%20K8s.md)
 - [K8s 知识图谱](./articles/K8s%20系列(一)%20-%20知识图谱.md)
 - [Controller 设计概要](./articles/如何编写%20K8s-Controller.md)
@@ -17,6 +20,7 @@ Contributions are highly appreciated, please feel free to submit your PRs.
 - [浅谈 CSI](./articles/K8s%20系列(五)%20-%20浅谈%20CSI.md)
 - [浅谈 CNI](./articles/K8s%20系列(六)%20-%20浅谈%20CNI.md)
 - [浅谈 CRI](./articles/浅谈%20K8s%20CRI.md)
+- [K8s Pod 生命周期管理](./articles/Pod%20生命周期管理.md)
 - [K8s Pod IP 分配机制](./articles/K8s%20Pod%20IP%20分配机制.md)
 - [K8s Service 网络机制](./articles/K8s%20Service%20网络机制.md)
 - [K8s Kubelet 启动流程](./articles/K8s%20Kubelet%20启动流程.md)
@@ -35,6 +39,7 @@ Contributions are highly appreciated, please feel free to submit your PRs.
 - [Krew - 高效管理 kubectl 插件](./articles/Krew%20-%20高效管理%20kubectl%20插件.md)
 
 ### K8s PRs
+
 - [Faster ExtractList. Add ExtractListWithAlloc variant](https://github.com/kubernetes/kubernetes/pull/113362)
 - [Fix issue that Audit Server could not correctly encode metav1.DeleteOption](https://github.com/kubernetes/kubernetes/pull/110110)
 - [Fix goroutine leak in the DeleteCollection](https://github.com/kubernetes/kubernetes/pull/105606)
@@ -54,6 +59,7 @@ Contributions are highly appreciated, please feel free to submit your PRs.
 - [Support krew search plugins by name and description](https://github.com/kubernetes-sigs/krew/pull/799)
 
 ### Examples Code
+
 - [Controller](./demo/examples/controller)
 - [Client](./demo/examples/client)
 - [Informer](./demo/examples/informer)
@@ -64,4 +70,5 @@ Contributions are highly appreciated, please feel free to submit your PRs.
 - [Convert](./demo/examples/convert-type)
 
 ### Join us
+
 Slack: https://join.slack.com/t/k8s-club/shared_invite/zt-x8xa3rpx-Vt4krR_ky6xK3XPAeEWlSg
