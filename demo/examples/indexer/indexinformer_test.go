@@ -1,15 +1,17 @@
 package indexer
 
 import (
-	initclient "K8s_demo/demo/examples/client"
 	"fmt"
+	"log"
+	"testing"
+
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
-	"log"
-	"testing"
+
+	initclient "K8s_demo/demo/examples/client"
 )
 
 func TestConfigMapIndexInformer(t *testing.T) {
@@ -97,7 +99,7 @@ func MetaLabelsIndexFunc(obj interface{}) ([]string, error) {
 type ConfigMapHandler struct {
 }
 
-func (c *ConfigMapHandler) OnAdd(obj interface{}) {
+func (c *ConfigMapHandler) OnAdd(obj interface{}, isInInitialList bool) {
 	fmt.Println("add:", obj.(*v1.ConfigMap).Name)
 }
 

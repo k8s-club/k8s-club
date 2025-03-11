@@ -402,10 +402,10 @@ func (f *DeltaFIFO) Replace(list []interface{}, resourceVersion string) error {
 * 如果 knownObjects（也就是 Indexer）不为空，那就通过`ListKeys`获取 Indexer 的全部 key 集合，记为 knowKeys，之后查找 knowKeys 中存在，但是 list 中不存在的 key，那对应的 obj 就是需要删除的。
 * 如果 knownObjects 为空，那就只好退而求其次，遍历 DeltaFIFO 的 items 中全部的 key，查找在 list 中不存在的 key，如果存在，这就是需要删除的 obj。
 
->注意：老版本不存在 Replaced 状态，全使用 Sync 状态。因此为了兼容老版本，需要设置`emitDeltaTypeReplaced`为 true 来开启 Replaced 状态。
+> 注意：老版本不存在 Replaced 状态，全使用 Sync 状态。因此为了兼容老版本，需要设置`emitDeltaTypeReplaced`为 true 来开启 Replaced 状态。
 当前版本中，Replaced：从 API Server 侧 list 操作同步最新的 obj 集合。Sync：在本地（DeltaFIFO、Indexer、Listener）之间的同步。
 
->注意：DeltaFIFO 中的`knownObjects`本质上就是 Indexer，在 sharedIndexInformer 的 Run 方法中可以看到。在 controller 的 NewInformer 中也可以看到。
+> 注意：DeltaFIFO 中的`knownObjects`本质上就是 Indexer，在 sharedIndexInformer 的 Run 方法中可以看到。在 controller 的 NewInformer 中也可以看到。
 最主要还是了解 sharedIndexInformer。
 ```go
 // sharedIndexInformer
@@ -468,7 +468,7 @@ func (s *sharedIndexInformer) HandleDeltas(obj interface{}) error {...}
 * 如果可以 get：调用 indexer 的**Update**方法，更新本地存储的 Obj，之后调用 distribute 方法，对所有的 Listener 进行**updateNotification**通知更新 Obj 消息；（**注意**：这部分的 distribute 针对 Sync 和部分 Replaced(见下述说明)只需要通知`syncingListeners`，而不是所有的 listeners。通过 distribute 方法最后的 bool 参数来设定，大部分情况设定为 false，说明通知所有的 listeners）
 * 如果 get 不到：调用 indexer 的**Add**方法，在本地存储添加该 Obj，之后调用 distribute 方法，对所有的 Listener 进行**addNotification**通知添加 Obj 消息；
 
->部分 Replaced 的说明 \
+> 部分 Replaced 的说明 \
 这部分 DeltaType 为 Replaced 的 Delta 需要满足：**accessor 与 oldAccessor 的`ResourceVersion`一致**。
 其中 accessor 可以理解为当前这个 Delta 的 obj。oldAccessor 的获取方式为：
 > 1. 获取 Delta 中的 obj
@@ -519,7 +519,7 @@ func (s *sharedIndexInformer)  AddEventHandlerWithResyncPeriod(handler ResourceE
 				// 如果 Informer 已经启动，Listener 设置的同步时间不能比 Informer 的小
 				resyncPeriod = s.resyncCheckPeriod
 			} else {
-				// 如果 Infromer 没有启动，下调 Infrormer 的同步时间，已适应最小的 Listner 同步时间
+				// 如果 Informer 没有启动，下调 Informer 的同步时间，已适应最小的 Listener 同步时间
 				s.resyncCheckPeriod = resyncPeriod
 				s.processor.resyncCheckPeriodChanged(resyncPeriod)
 			}
@@ -531,7 +531,7 @@ func (s *sharedIndexInformer)  AddEventHandlerWithResyncPeriod(handler ResourceE
 }
 ```
 
->**注意：Listener 的同步时间`requestedResyncPeriod`的设置范围是有要求的** \
+> **注意：Listener 的同步时间`requestedResyncPeriod`的设置范围是有要求的** \
 最基本的不能比`minimumResyncPeriod`（1秒）小。
 其次，其和 Informer 内部的同步时间`resyncCheckPeriod`有关系，具体如下：
 需要先理解 Listener 和 Informer 是多对一的关系，一个 Informer 对应多个 Listener，因此 Listener 设置的同步时间`requestedResyncPeriod`
@@ -539,15 +539,15 @@ func (s *sharedIndexInformer)  AddEventHandlerWithResyncPeriod(handler ResourceE
 
 ## 一些思考
 * 什么时候需要 Replace？以及 DeltaFIFO 中 Replaced 状态的产生方式？
->首先需要知道的是 Replaced 状态的产生，是由于 Reflector 从 API Server 中 list 所有的 Obj，这些 Obj 对应的 Delta 都会被打上 Replaced 的 DeltaType。那本质上来说，只有一种情况需要 list，也就是 Reflector 刚启动的时候，它会通过内部的`ListAndWatch`函数进行一次 list，后续就通过 watch event 来保证 API Server 和本地之间的同步。但是，我们平时也听过 relist，这种操作，也即是当遇到 watch event 出错(IO 错误)的时候，需要重新去向 API Server 请求一次所有的 Obj。这类场景的本质其实就是第一种，因为`ListAndWatch`是运行在`BackoffUntil`内的，当 ListAndWatch 因为非 stopChan 而发生退出时，就会由 BackoffUntil 在一定时间后拉起，这是就相当于 Reflector 刚启动。由此就可以清楚 Replaced 状态的产生，同它字面的意思一致，就是用 API Server 侧的 Obj 集合**替换**本地内容。
+> 首先需要知道的是 Replaced 状态的产生，是由于 Reflector 从 API Server 中 list 所有的 Obj，这些 Obj 对应的 Delta 都会被打上 Replaced 的 DeltaType。那本质上来说，只有一种情况需要 list，也就是 Reflector 刚启动的时候，它会通过内部的`ListAndWatch`函数进行一次 list，后续就通过 watch event 来保证 API Server 和本地之间的同步。但是，我们平时也听过 relist，这种操作，也即是当遇到 watch event 出错(IO 错误)的时候，需要重新去向 API Server 请求一次所有的 Obj。这类场景的本质其实就是第一种，因为`ListAndWatch`是运行在`BackoffUntil`内的，当 ListAndWatch 因为非 stopChan 而发生退出时，就会由 BackoffUntil 在一定时间后拉起，这是就相当于 Reflector 刚启动。由此就可以清楚 Replaced 状态的产生，同它字面的意思一致，就是用 API Server 侧的 Obj 集合**替换**本地内容。
 
 ### TODO
 * 在整个 k8s 体系下，是通过哪些手段减少对 kube-apiserver 的压力？
 > 1. informer 机制：
 > * 维护本地 store(Indexer)从而使得 `R` 操作直接访问 Inxer 即可。也即是通过 obj-key 在 indexer 中直接取到 obj。
->* ListAndWatch 机制，减少与 API Server 的交互，只有在起初通过一次 List 来全量获取，后续通过 watch 已增量的方式来更新。
->2. sharedInformer 机制：
->* singleton 模式：同一个资源只有一个 informer 实例，多个 listener 来绑定 informer，从而实现一种资源的改动，通过一个 informer 实例，通知给若干个 listener。避免多个 listener 都与 API Server 打交道。
+> * ListAndWatch 机制，减少与 API Server 的交互，只有在起初通过一次 List 来全量获取，后续通过 watch 已增量的方式来更新。
+> 2. sharedInformer 机制：
+> * singleton 模式：同一个资源只有一个 informer 实例，多个 listener 来绑定 informer，从而实现一种资源的改动，通过一个 informer 实例，通知给若干个 listener。避免多个 listener 都与 API Server 打交道。
 
 * kube-apiserver 又是通过哪些手段减少对 etcd 的压力？
 > watch cache 方面，待完善。
