@@ -3,7 +3,7 @@
 官方Doc, 我认为可以当成圣经去读，**慢慢读，反复写，反复重构**:
 
 - 对象的定义的一些参考和约束:  https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md
-- Controller的编写的一些参考和约束: https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture/principles.md
+- Controller的编写的一些参考和约束: https://github.com/kubernetes/design-proposals-archive/blob/main/architecture/principles.md
 
 
 做好一套(Controller + runtime.Object)我认为重要的几个点:
@@ -18,7 +18,7 @@
 
 ## 纵览
 
-> k8s中大量的组件使用Reconcile(所谓Reoncile指的就是驱动`actual`往`desired`递进)的逻辑完成k8s现役功能
+> k8s中大量的组件使用Reconcile(所谓Reconcile指的就是驱动`actual`往`desired`递进)的逻辑完成k8s现役功能
 
 比如: 
 
