@@ -184,7 +184,8 @@ type cache struct {
 ### `ThreadSafeStore`
 
 接口定义了常规的存储、读取、更新接口，以及对于索引的一些接口。
-注意：添加新的索引 `addIndexers` 只能在 local store 还没有启动，也就是还没有数据存储的时候才能够使用。如果 local store 已经启动，调用该方法会报错。
+
+~~注意：添加新的索引 `addIndexers` 只能在 local store 还没有启动，也就是还没有数据存储的时候才能够使用。如果 local store 已经启动，调用该方法会报错。~~
 
 ```go
 type ThreadSafeStore interface {
@@ -232,7 +233,8 @@ type threadSafeMap struct {
 
 * 如果在 local store 中已经存在数据，可以再添加新的索引方式 indexFunc(indexers) 吗？
 
-> 不可以。添加新的索引方式通过函数 `AddIndexers` 来实现。内部首先判断 indexer 中是否存在数据(查看其中的 items 的大小是否为0)，
+> 在 k8s 1.30 之前是不可以的。
+> 添加新的索引方式通过函数 `AddIndexers` 来实现。内部首先判断 indexer 中是否存在数据(查看其中的 items 的大小是否为0)，
 > 如果存在数据，则返回 err，不做任何操作。如果不存在数据，查看当前添加的 indexers 中的 indexName 和已存在的 indexName 是否有重复的，一旦重复就返回 err。
 > 通过以上两种判断就可以将新的 Indexers 添加至当前的 Indexers 中。代码逻辑如下：
 
@@ -255,6 +257,31 @@ func (c *threadSafeMap) AddIndexers(newIndexers Indexers) error {
 	for k, v := range newIndexers {
 		c.indexers[k] = v
 	}
+	return nil
+}
+```
+
+> 在 k8s 1.30 之后，支持了 informer 开启之后（即 local store 中存在数据之后）添加 indexers 的能力。
+> 主要通过修改 `AddIndexers` 函数实现，在添加 indexer 之前去掉了对于 `items` 是否存在的判断。
+> 在完成 indexer 的新增之后，对于 `items` 中已经存在的数据，则根据新的 indexers 逐个添加新的 index.
+> 代码逻辑如下：
+
+```go
+func (c *threadSafeMap) AddIndexers(newIndexers Indexers) error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	if err := c.index.addIndexers(newIndexers); err != nil {
+		return err
+	}
+
+	// If there are already items, index them
+	for key, item := range c.items {
+		for name := range newIndexers {
+			c.index.updateSingleIndex(name, nil, item, key)
+		}
+	}
+
 	return nil
 }
 ```
