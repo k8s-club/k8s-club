@@ -262,7 +262,7 @@ func (c *threadSafeMap) AddIndexers(newIndexers Indexers) error {
 ```
 
 > 在 k8s 1.30 之后，支持了 informer 开启之后（即 local store 中存在数据之后）添加 indexers 的能力。
-> 主要通过修改 `AddIndexers` 函数实现，在添加 indexer 之前去掉了对于 `items` 是否存在的判断。
+> 主要通过修改 `AddIndexers` 函数实现，在添加 indexer 之前去掉了对于 `items` 是否为空的判断。
 > 在完成 indexer 的新增之后，对于 `items` 中已经存在的数据，则根据新的 indexers 逐个添加新的 index.
 > 代码逻辑如下：
 

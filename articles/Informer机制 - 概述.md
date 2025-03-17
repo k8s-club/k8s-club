@@ -256,8 +256,8 @@ list 操作在 ListAndWatch 中只会运行一次，简单来说，也可看作�
 2. 等待 goroutine 结束，`listCh`接收到信号，表示 list 完成。或者`stopCh`、`panicCh`发来信号。其中 stopCh 表示调用者需要停止，panicCh 表示 goroutine 的 list 过程出错了
 3. 整理 API Server 侧拉取到的最新 obj 集合，同时`syncWith`到 DeltaFIFO 中（最终调用 DeltaFIFO 的 Replace 方法）。
 
-> 注意：对于 relist 操作，目前理解：是由于 watch 阶段遇到错误导致 ListAndWatch 退出，但是退出的 err=nil，此时通过外层的 Backoffuntil 来负责重启 ListAndWatch，
-这样又回执行一遍新的 List，开启新的 Resyn goroutine，再持续 watch。这也就是 DeltaFIFO 中 DeltaType 为`Replace`的 Delta 产生的源头
+> 注意：对于 relist 操作，目前理解：是由于 watch 阶段遇到错误导致 ListAndWatch 退出，但是退出的 err=nil，此时通过外层的 BackoffUntil 来负责重启 ListAndWatch，
+这样又回执行一遍新的 List，开启新的 Resync goroutine，再持续 watch。这也就是 DeltaFIFO 中 DeltaType 为`Replace`的 Delta 产生的源头
 
 **resync**
 ```go
@@ -540,6 +540,17 @@ func (s *sharedIndexInformer)  AddEventHandlerWithResyncPeriod(handler ResourceE
 ## 一些思考
 * 什么时候需要 Replace？以及 DeltaFIFO 中 Replaced 状态的产生方式？
 > 首先需要知道的是 Replaced 状态的产生，是由于 Reflector 从 API Server 中 list 所有的 Obj，这些 Obj 对应的 Delta 都会被打上 Replaced 的 DeltaType。那本质上来说，只有一种情况需要 list，也就是 Reflector 刚启动的时候，它会通过内部的`ListAndWatch`函数进行一次 list，后续就通过 watch event 来保证 API Server 和本地之间的同步。但是，我们平时也听过 relist，这种操作，也即是当遇到 watch event 出错(IO 错误)的时候，需要重新去向 API Server 请求一次所有的 Obj。这类场景的本质其实就是第一种，因为`ListAndWatch`是运行在`BackoffUntil`内的，当 ListAndWatch 因为非 stopChan 而发生退出时，就会由 BackoffUntil 在一定时间后拉起，这是就相当于 Reflector 刚启动。由此就可以清楚 Replaced 状态的产生，同它字面的意思一致，就是用 API Server 侧的 Obj 集合**替换**本地内容。
+
+* Informer 中的 HasSynced 是什么意思？有什么作用？
+> `HasSynced` 方法被用于判断 informer 是否已经完成初始全量数据的同步。它分为以下两个维度：
+> - 在 k8s 1.27 之前，informer 机制中有一层 SharedInformer 维度的 `HasSynced` 逻辑，即 `sharedIndexInformer` 的 `HasSynced()` 方法（最终实现为 `DeltaFIFO` 的 `HasSynced()` 方法）。
+> 	- **方法说明**：使用者可以调用该方法来判断首次入队（即第一次全量 List 并进入 DeltaFIFO ）的对象事件是否已经被 `HandleDeltas` 方法全部处理。如果结果返回为 true, 则说明全量对象数据已经被 `HandleDeltas` 同步处理并且存储到了 `indexer` 中，并且分发给了所有的 listener. 但是因为 listener 是使用两个无缓冲的 channel `addCh` 和 `nextCh` 以及一个无限环形缓冲区 `pendingNotifications` 来实现的一个异步处理的逻辑，所以使用者无法知道这些对象何时能被 listener 全部处理完。
+> 	- **实现原理**：`sharedIndexInformer` 使用 `DeltaFIFO` 的 `populated` 和 `initialPopulationCount` 来实现这一 `HasSynced` 的能力。有数据添加到 `DeltaFIFO` 时，`populated` 即被标记为 true, `Replace()` 方法被调用时，`initialPopulationCount` 就会完成初始对象列表的计数操作，后续每从 `DeltaFIFO` 中取出一个对象，`initialPopulationCount` 就执行一次递减操作，直到减为 0. 当 `populated` 为 true 并且 `initialPopulationCount` 为 0 时，说明 informer 完成一次全量对象从 `DeltaFIFO` 入队到出队的处理。
+> 	- **代码示例**：`sharedIndexInformer.HasSynced()` 的使用方式可以参考 [hasSynced 测试 Demo](../demo/examples/informer/informer_has_synced_test.go) 中 `TestInformerHasSynced` 方法。
+> - 在某些场景中，上述的第一层 `HasSynced` 的结果并不能满足使用者的需求（比如说一些调度插件需要确保自身缓存获取到当前所有的 `pod/node` 数据之后再开始进行调度逻辑），所以从 k8s 1.27 开始，informer 机制中新增了一层 listener 维度的 `HasSynced` 逻辑，即 `processorListener`的 `HasSynced()` 方法。
+> 	- **方法说明**：使用者可以调用该方法判断首次入队的对象事件是否已经被当前的 listener 完成处理。如果结果返回为 true, 则说明全量对象数据已经被 listener 完成了处理（即完成了 `ResourceEventHandler` 的同步执行）。
+> 	- **实现原理**：`processorListener` 使用 `syncTracker` 来实现这一 `HasSynced` 的能力。初始化 listener 时 `syncTracker` 会跟踪上游 `informer.HasSynced()`，首次加入的对象事件进入 `addCh` 时，`syncTracker` 中的计数器会执行 +1 的原子操作，该事件从 `nextCh`  被取出并执行完 handler 处理逻辑后，计数器会执行 -1 的原子操作。当 `syncTracker` 中跟踪的 `informer.HasSynced()` 为 true 并且计数器 `count` 不大于 0 时，说明所有初始对象已经被 listener 完成处理。
+> 	- **代码示例**：`processorListener.HasSynced()` 的使用方式可以参考 [hasSynced 测试 Demo](../demo/examples/informer/informer_has_synced_test.go) 中 `TestListenerHasSynced` 方法。
 
 ### TODO
 * 在整个 k8s 体系下，是通过哪些手段减少对 kube-apiserver 的压力？
