@@ -37,6 +37,7 @@ Contributions are highly appreciated, please feel free to submit your PRs.
 - [K8s 如何配置 etcd https 证书？](./articles/K8s%20系列(三)%20-%20如何配置%20etcd%20https%20证书？.md)
 - [K8s PR 怎样才能被 merge？](./articles/K8s%20系列(二)%20-%20K8s%20PR%20怎样才能被%20merge？.md)
 - [Krew - 高效管理 kubectl 插件](./articles/Krew%20-%20高效管理%20kubectl%20插件.md)
+- [Pod Deletion vs Eviction](./articles/Pod%20Deletion%20vs%20Eviction.md)
 
 ### K8s PRs
 
