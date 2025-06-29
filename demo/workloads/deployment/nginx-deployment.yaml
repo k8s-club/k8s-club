@@ -17,3 +17,8 @@ spec:
         image: nginx:1.7.9
         ports:
         - containerPort: 80
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          timeoutSeconds: 5

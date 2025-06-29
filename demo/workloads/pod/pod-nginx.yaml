@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-nginx
+spec:
+  #nodeName: xxx
+  containers:
+    - name: app
+      image: nginx:1.7.9

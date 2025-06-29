@@ -37,3 +37,20 @@ spec:
       storage: 50Gi
   storageClassName: cbs-ssd
   volumeMode: Filesystem
+  volumeName: nginx-pv-test
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nginx-pv-test
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 50Gi
+  csi:
+    driver: com.tencent.cloud.csi.cbs
+    fsType: ext4
+    volumeHandle: disk-xxx
+  storageClassName: cbs-ssd
+  volumeMode: Filesystem

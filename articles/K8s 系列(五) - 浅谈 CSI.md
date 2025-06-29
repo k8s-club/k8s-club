@@ -32,7 +32,7 @@ K8s 持久化存储经历了从 in-tree Volume 到 CSI Plugin(out-of-tree) 的�
 
 PV 创建核心流程：
 - `apiserver` 创建 Pod，根据 `PodSpec.Volumes` 创建 Volume；
-- `PVController` 监听到 PV informer，添加相关 Annotation(如 pv.kubernetes.io/provisioned-by)，调谐实现 PVC/PV 的绑定(Bound)；
+- `PVController` 监听到 PVC informer，添加相关 Annotation(如 pv.kubernetes.io/provisioned-by)，调谐实现 PVC/PV 的绑定(Bound)；
 - 判断 `StorageClass.volumeBindingMode`：`WaitForFirstConsumer` 则等待 Pod 调度到 Node 成功后再进行 PV 创建，`Immediate` 则立即调用 PV 创建逻辑，无需等待 Pod 调度；
 - `external-provisioner` 监听到 PV informer, 调用 RPC-CreateVolume 创建 Volume；
 - `AttachDetachController` 将已经绑定(Bound) 成功的 PVC/PV，经过 InTreeToCSITranslator 转换器，由 CSIPlugin 内部逻辑实现 `VolumeAttachment` 资源类型的创建；

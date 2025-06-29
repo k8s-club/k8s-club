@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cmd-demo
+spec:
+  restartPolicy: Never
+  #nodeName: xxx
+  containers:
+  - name: demo-container
+    image: astraw99/busybox-demo
+    command:
+      - /bin/sh
+      - -c
+      - sleep 3600

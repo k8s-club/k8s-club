@@ -43,17 +43,17 @@ OCI（Open Container Initiative，开放容器计划），是在 2015 年由 Doc
 所谓 container runtime，主要负责的是容器的生命周期的管理。OCI 主要分为容器运行时规范(runtime-spec) 和镜像规范(image-spec) 两部分，runtime-spec 标准对容器的创建、删除、查看、状态等操作进行了定义，image-spec 对镜像格式、打包(Bundle)、存储等进行了定义。
 
 ### 2.3 runc
-runc，是由 Docker 贡献的对于 OCI 标准的一个参考实现，是一个可以用于创建和运行容器的 CLI(command-line interface) 工具。runc 直接与容器所依赖的 Cgroup/OS 等进行交互，负责为容器配置 Cgroup/namespace 等启动容器所需的环境，创建启动容器的相关进程。
+runc，是由 Docker 贡献的对于 OCI 标准的一个具体实现，是一个可以用于创建和运行容器的 CLI(command-line interface) 工具。runc 直接与容器所依赖的 Cgroup/OS 等进行交互，负责为容器配置 Cgroup/Namespace 等启动容器所需的环境，创建启动容器的相关进程。
 
-为了兼容 OCI 标准，Docker 也做了架构调整。将容器运行时相关的程序从 Docker daemon 剥离出来，形成了containerd。containerd 向 Docker 提供运行容器的 API，二者通过 gRPC 进行交互。containerd 最后会通过 runc 来实际运行容器。
+为了兼容 OCI 标准，Docker 也做了架构调整。将容器运行时相关的程序从 Docker daemon 剥离出来，形成了 containerd。containerd 向 Docker 提供运行容器的 API，二者通过 gRPC 进行交互。containerd 最后会通过 runc 来实际运行容器。
 
 ![runc](../images/CRI/runc.png)
 
 ## 3. CRI
-CRI（Container Runtime Interface，容器运行时接口）是 K8s 定义的一组与容器运行时进行交互的接口，用于将 K8s 平台与特定的容器实现解耦。在 K8s 早期的版本中，对于容器环境的支持是通过 Dockershim(hard code) 方式直接调用 Docker API 的，后来为了支持更多的容器运行时和更精简的容器运行时，K8s 在遵循 OCI 基础上提出了CRI。
+CRI（Container Runtime Interface，容器运行时接口）是 K8s 定义的一组与容器运行时进行交互的接口，用于将 K8s 平台与特定的容器实现解耦。在 K8s 早期的版本中，对于容器环境的支持是通过 Dockershim(hard code) 方式直接调用 Docker API 的，后来为了支持更多的容器运行时和更精简的容器运行时，K8s 在遵循 OCI 基础上提出了 CRI。
 
 ### 3.1 dockershim
-dockershim 是 Kubernetes 的一个组件，主要目的是为了通过 CRI 操作 Docker。Kubernetes 在创建之初便采用Docker 作为它的默认容器进行时，后续代码当中包含了很多对 Docker 相关的操作逻辑。后期 Kubernetes 为了能够做解耦，兼容更多的容器进行时，将操作 Docker 相关逻辑整体独立起来组成了 dockershim。
+dockershim 是 Kubernetes 的一个组件，主要目的是为了通过 CRI 操作 Docker。Kubernetes 在创建之初便采用 Docker 作为它的默认容器进行时，后续代码当中包含了很多对 Docker 相关的操作逻辑。后期 Kubernetes 为了能够做解耦，兼容更多的容器进行时，将操作 Docker 相关逻辑整体独立起来组成了 dockershim。
 
 2020 年，K8s [宣布弃用 dockershim](https://kubernetes.io/blog/2022/02/17/dockershim-faq/)，标志着容器运行时正式向 CRI 切换，以满足对更多 Runtime 的支持，提高 K8s 生态的开放性和扩展性。
 
@@ -219,7 +219,7 @@ func (kl *Kubelet) syncLoopIteration(configCh <-chan kubetypes.PodUpdate, handle
 > kubelet -> Run -> syncLoop -> SyncPodCreate/Kill -> UpdatePod -> syncPod/syncTerminatingPod -> dockershim gRPC -> Pod running/teminated
 
 ## 6. Container 创建/删除
-当 Pod-Sandbox 创建出来以后，首先会创建基础容器(infra-container，也叫 pause 容器)，通过 [CNI 机制](https://github.com/k8s-club/k8s-club/blob/main/articles/K8s%20%E7%B3%BB%E5%88%97(%E5%85%AD)%20-%20%E6%B5%85%E8%B0%88%20CNI.md) 配置 Pod 网络环境，创建临时数据目录(存放 container logs)，为下一步 Container 创建做好相关准备工作。
+当 Pod-Sandbox 创建出来以后，首先会创建基础容器 (infra-container，也叫 pause 容器)，通过 [CNI 机制](https://github.com/k8s-club/k8s-club/blob/main/articles/K8s%20%E7%B3%BB%E5%88%97(%E5%85%AD)%20-%20%E6%B5%85%E8%B0%88%20CNI.md) 配置 Pod 网络环境，创建临时数据目录 (存放 container logs)，为下一步 Container 创建做好相关准备工作。
 
 Container 目前分为三种类型：
 - Ephemeral Container：临时容器，用于 debug 及排障所需的一次性容器。
@@ -229,7 +229,7 @@ Container 目前分为三种类型：
 创建 Container 的过程主要有：
 > PullImage -> CreateContainer -> StartContainer -> PostStartHook -> Container running
 
-当 Pod 内所有 Container 启动并正常运行起来后，Pod-phase 更新为 Running，表示 Pod 正常运行。
+当 Pod 内所有 Container 都已创建（created） && 都已启动（started） && 至少有一个容器在运行中（running），Pod-phase 更新为 Running，表示 Pod 正常运行。
 
 Pod-Container 创建流程小结如下：
 
