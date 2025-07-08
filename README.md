@@ -23,6 +23,7 @@ Contributions are highly appreciated, please feel free to submit your PRs.
 - [K8s Pod 生命周期管理](./articles/Pod%20生命周期管理.md)
 - [K8s Pod IP 分配机制](./articles/K8s%20Pod%20IP%20分配机制.md)
 - [K8s Service 网络机制](./articles/K8s%20Service%20网络机制.md)
+- [K8s Container 管理机制](./articles/K8s%20Container%20管理机制.md)
 - [K8s Kubelet 启动流程](./articles/K8s%20Kubelet%20启动流程.md)
 - [Kubelet - Probe 探针](./articles/Kubelet%20-%20Probe%20探针.md)
 - [K8s Scheduler Cache](./articles/K8s%20Scheduler%20Cache.md)
@@ -40,14 +41,17 @@ Contributions are highly appreciated, please feel free to submit your PRs.
 - [Krew - 高效管理 kubectl 插件](./articles/Krew%20-%20高效管理%20kubectl%20插件.md)
 
 ### K8s PRs
-
+- [Optimize watch-cache getlist](https://github.com/kubernetes/kubernetes/pull/116327)
 - [Faster ExtractList. Add ExtractListWithAlloc variant](https://github.com/kubernetes/kubernetes/pull/113362)
-- [Fix issue that Audit Server could not correctly encode metav1.DeleteOption](https://github.com/kubernetes/kubernetes/pull/110110)
 - [Fix goroutine leak in the DeleteCollection](https://github.com/kubernetes/kubernetes/pull/105606)
+- [Bugfix(scheduler): preemption picks wrong victim node with higher priority pod on it](https://github.com/kubernetes/kubernetes/pull/128307)
+- [Fix issue that Audit Server could not correctly encode metav1.DeleteOption](https://github.com/kubernetes/kubernetes/pull/110110)
 - [Explain the reason why metaclient special processing metav1.DeleteOptions encoding](https://github.com/kubernetes/kubernetes/pull/104573)
 - [Lock-free broadcaster](https://github.com/kubernetes/kubernetes/pull/91602)
 - [Improve DeltaFIFO function 'ListKeys'](https://github.com/kubernetes/kubernetes/pull/104725)
 - [Fix delete nil pointer panic](https://github.com/kubernetes/kubernetes/pull/103232)
+- [Add container name in the BackOff event message](https://github.com/kubernetes/kubernetes/pull/113216)
+- [Simplify finalizer func to improve readability](https://github.com/kubernetes-sigs/sig-storage-lib-external-provisioner/pull/158)
 - [Unify controller worker num param threadiness to workers](https://github.com/kubernetes/kubernetes/pull/104231)
 - [Add GC workqueue Forget to stop the rate limiter](https://github.com/kubernetes/kubernetes/pull/106029)
 - [Fix kubectl unlabel response msg](https://github.com/kubernetes/kubernetes/pull/104372)

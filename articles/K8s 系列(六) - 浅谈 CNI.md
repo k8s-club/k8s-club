@@ -38,7 +38,7 @@ CNI 对外暴露了从一个网络里面添加和剔除容器的接口。CNI 使
 
 ![CNI-model](../images/CNI/CNI-model.png)
 
-CNI支持与第三方 IPAM 的集成，可以用于任何容器 runtime。CNM 从设计上就仅仅支持 Docker。由于 CNI 简单的设计，许多人认为编写 CNI 插件会比编写 CNM 插件来得简单。
+CNI 支持与第三方 IPAM 的集成，可以用于任何容器 runtime。CNM 从设计上就仅仅支持 Docker。由于 CNI 简单的设计，许多人认为编写 CNI 插件会比编写 CNM 插件来得简单。
 
 ## 3. CNI 插件
 CNI 插件是二进制可执行文件，会被 kubelet 调用。启动 kubelet --network-plugin=cni, --cni-conf-dir 指定 networkconfig 配置，默认路径是：/etc/cni/net.d。另外，--cni-bin-dir 指定 plugin 可执行文件路径，默认路径是：/opt/cni/bin。

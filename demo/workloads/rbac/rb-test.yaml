@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: rb-test
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: role-not-exist # should check Role existence
+subjects:
+- kind: ServiceAccount
+  name: sa-not-exist # should check SA existence
+#  namespace: default

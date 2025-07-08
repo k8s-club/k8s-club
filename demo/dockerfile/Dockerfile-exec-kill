@@ -1,0 +1,3 @@
+FROM ubuntu
+
+CMD ["top"]

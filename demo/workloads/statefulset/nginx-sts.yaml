@@ -15,6 +15,15 @@ spec:
     spec:
       containers:
       - name: nginx
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 13043
+          timeoutSeconds: 5
         image: nginx:1.7.9
+        args:
+          - /bin/sh
+          - -c
+          - ls /abc
         ports:
         - containerPort: 80
